@@ -1,4 +1,5 @@
 import Logo from "@/components/Logo";
+import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
 import Chat from "@/components/Chat";
 import { getBot, publicConfig } from "@/lib/bots";
@@ -8,7 +9,6 @@ export const dynamic = "force-dynamic";
 const FEATURES: Array<[string, string]> = [
   ["Hidden webhooks", "Each bot's n8n URL lives server-side only. Visitors never see it, so nobody can scrape or hammer it directly."],
   ["Rate limiting", "Per-session and per-IP token buckets, tuned per bot. Abuse gets a 429 before it ever reaches n8n."],
-  ["Real authentication", "Email + SSO accounts, signed sessions, org-scoped API keys. Public or private, per bot."],
   ["Multi-tenant SaaS", "Organizations, teams, usage analytics, and white-label branding built in."],
 ];
 
@@ -86,10 +86,7 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className="relative m-stripe" />
-      <footer className="relative py-6 text-center text-xs font-bold uppercase tracking-[1.5px] text-neutral-600">
-        Build with n8n. Deploy with ChatLayer.
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

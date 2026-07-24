@@ -7,6 +7,7 @@ import { clientIp, devTopUpAllowed, intEnv } from "../lib/config.ts";
 import { assertHttpUrl } from "../lib/ssrf.ts";
 import { parseDelta } from "../lib/stream.ts";
 import { webhookAuthHeaders } from "../lib/webhook-auth.ts";
+import { readableText } from "../lib/contrast.ts";
 
 process.env.SESSION_SECRET = "test-secret-0123456789012345678901234567";
 
@@ -137,5 +138,12 @@ assert.equal(
 assert.deepEqual(webhookAuthHeaders({ webhookAuthType: "header", webhookAuthHeader: "", webhookAuthValue: "y" }), {}, "header needs a name");
 assert.deepEqual(webhookAuthHeaders({ webhookAuthType: "basic", webhookAuthHeader: "", webhookAuthValue: "p" }), {}, "basic needs a username");
 assert.ok(webhookAuthHeaders({ webhookAuthType: "basic", webhookAuthHeader: "u", webhookAuthValue: "" }).Authorization, "basic allows an empty password");
+
+// --- readable text contrast ---
+assert.equal(readableText("#ffffff"), "#111111", "dark text on white");
+assert.equal(readableText("#000000"), "#ffffff", "white text on black");
+assert.equal(readableText("#1c69d4"), "#ffffff", "white stays on the default brand blue");
+assert.equal(readableText("#ffdd00"), "#111111", "dark text on a light yellow brand");
+assert.equal(readableText("garbage"), "#ffffff", "invalid colour defaults to white");
 
 console.log("selfcheck: all assertions passed");

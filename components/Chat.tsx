@@ -212,13 +212,13 @@ export default function Chat({
       : "flex h-dvh flex-col bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 
   return (
-    <div className={shell} dir={config.rtl ? "rtl" : "ltr"} style={{ "--brand": config.color } as React.CSSProperties}>
+    <div className={shell} dir={config.rtl ? "rtl" : "ltr"} style={{ "--brand": config.color, "--brand-fg": config.brandFg } as React.CSSProperties}>
       <header className="flex items-center gap-3 border-b border-neutral-100 px-4 py-3 dark:border-neutral-800/60">
         {config.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={config.logoUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
         ) : (
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--brand)] text-sm font-semibold text-white">
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--brand)] text-sm font-semibold text-[var(--brand-fg)]">
             {config.name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -249,7 +249,7 @@ export default function Chat({
                 /* storage blocked */
               }
             }}
-            className="rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-white"
+            className="rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-[var(--brand-fg)]"
           >
             I agree, start chatting
           </button>
@@ -273,7 +273,7 @@ export default function Chat({
             <textarea name="message" required rows={3} placeholder="How can we help?" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500 resize-none" />
           )}
           {leadError && <p className="text-xs text-red-500">{leadError}</p>}
-          <button type="submit" disabled={leadBusy} className="mt-auto rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
+          <button type="submit" disabled={leadBusy} className="mt-auto rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-[var(--brand-fg)] disabled:opacity-60">
             {leadBusy ? "Starting..." : "Start chat"}
           </button>
         </form>
@@ -286,7 +286,7 @@ export default function Chat({
                   {m.text}
                 </p>
               ) : m.role === "user" ? (
-                <p key={i} className="ms-auto w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-[var(--brand)] px-3.5 py-2 text-sm text-white">
+                <p key={i} className="ms-auto w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-[var(--brand)] px-3.5 py-2 text-sm text-[var(--brand-fg)]">
                   {m.text}
                 </p>
               ) : mounted ? (
@@ -370,7 +370,7 @@ export default function Chat({
                 }
               }}
             />
-            <button type="submit" disabled={busy || !input.trim()} aria-label="Send message" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--brand)] text-white transition-opacity disabled:opacity-40">
+            <button type="submit" disabled={busy || !input.trim()} aria-label="Send message" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--brand)] text-[var(--brand-fg)] transition-opacity disabled:opacity-40">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
                 <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

@@ -1,6 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "./db";
 import { bot, member, organization } from "./db/schema";
+import { readableText } from "./contrast";
 
 export type Bot = typeof bot.$inferSelect;
 export type PublicBotConfig = {
@@ -8,6 +9,7 @@ export type PublicBotConfig = {
   name: string;
   welcome: string;
   color: string;
+  brandFg: string;
   logoUrl: string | null;
   suggestedPrompts: string[];
   allowAnonymous: boolean;
@@ -61,6 +63,7 @@ export function publicConfig(b: Bot): PublicBotConfig {
     name: b.name,
     welcome: b.welcome,
     color: b.color,
+    brandFg: readableText(b.color),
     logoUrl: b.logoUrl,
     suggestedPrompts: b.suggestedPrompts ?? [],
     allowAnonymous: b.allowAnonymous,

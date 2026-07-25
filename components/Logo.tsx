@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-const W = 371;
-const H = 311;
+const W = 852;
+const H = 693;
 
 /**
  * The wordmark is two-tone: "Chat" is brand blue, "Layer" is dark charcoal. The
@@ -24,14 +24,14 @@ export default function Logo({
 }) {
   if (onDark) {
     return (
-      <Image src="/logo-dark.png" alt="ChatLayer" width={W} height={H} priority={priority} className={className} />
+      <Image src="/logo-dark.png" alt="Chatnode" width={W} height={H} priority={priority} className={className} />
     );
   }
   return (
     <>
       <Image
         src="/logo.png"
-        alt="ChatLayer"
+        alt="Chatnode"
         width={W}
         height={H}
         priority={priority}

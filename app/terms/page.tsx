@@ -1,17 +1,17 @@
 import MarketingShell from "@/components/MarketingShell";
 
-export const metadata = { title: "Terms - ChatLayer" };
+export const metadata = { title: "Terms - Chatnode" };
 
 const h2 = "pt-3 text-lg font-bold uppercase tracking-wide text-white";
 
 export default function TermsPage() {
   return (
-    <MarketingShell title="Terms of Service" subtitle="The basics of using ChatLayer.">
-      <p>By creating a workspace or using ChatLayer, you agree to these terms.</p>
+    <MarketingShell title="Terms of Service" subtitle="The basics of using Chatnode.">
+      <p>By creating a workspace or using Chatnode, you agree to these terms.</p>
 
       <h2 className={h2}>The service</h2>
       <p>
-        ChatLayer is a secure gateway and widget for n8n Chat workflows. You bring your own n8n instance and webhooks; we proxy, secure, and
+        Chatnode is a secure gateway and widget for n8n Chat workflows. You bring your own n8n instance and webhooks; we proxy, secure, and
         meter the traffic to them.
       </p>
 
@@ -33,14 +33,14 @@ export default function TermsPage() {
 
       <h2 className={h2}>Limitation of liability</h2>
       <p>
-        To the extent permitted by law, ChatLayer is not liable for indirect or consequential damages, or for the acts of your workflows or
+        To the extent permitted by law, Chatnode is not liable for indirect or consequential damages, or for the acts of your workflows or
         the content they produce.
       </p>
 
       <h2 className={h2}>Changes and contact</h2>
       <p>
         We may update these terms; continued use means acceptance. Questions:{" "}
-        <a href="mailto:hello@chatlayer.io" className="text-[#4a90e2] hover:underline">hello@chatlayer.io</a>.
+        <a href="mailto:hello@chatnode.app" className="text-[#4a90e2] hover:underline">hello@chatnode.app</a>.
       </p>
 
       <p className="text-sm text-neutral-500">This is a starting template, not legal advice. Have it reviewed by counsel before you rely on it.</p>

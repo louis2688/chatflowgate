@@ -1,4 +1,4 @@
-/* ChatLayer embed loader. Usage:
+/* Chatnode embed loader. Usage:
    <script src="https://host/embed.js" data-bot="BOT_ID" data-color="#1c69d4" defer></script>
    Mints an origin-validated session in the PARENT context (so the bot's domain
    allowlist is enforced), then hands the token to the widget iframe via #hash. */
@@ -8,7 +8,7 @@
   if (!script) return;
   var host = new URL(script.src).origin;
   var botId = script.getAttribute("data-bot");
-  if (!botId) { console.error("[ChatLayer] missing data-bot attribute"); return; }
+  if (!botId) { console.error("[Chatnode] missing data-bot attribute"); return; }
   var color = script.getAttribute("data-color") || "#1c69d4";
   var side = script.getAttribute("data-position") === "left" ? "left" : "right";
 

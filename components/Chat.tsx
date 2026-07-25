@@ -15,11 +15,22 @@ function renderMarkdown(text: string): string {
 
 let memoryToken: string | null = null;
 function tokenKey(botId: string) {
-  return `chatlayer.token.${botId}`;
+  return `chatnode.token.${botId}`;
 }
 function readToken(botId: string): string | null {
   try {
-    return sessionStorage.getItem(tokenKey(botId)) ?? memoryToken;
+    const current = sessionStorage.getItem(tokenKey(botId));
+    if (current) return current;
+    // Adopt a session minted before the Chatnode rename, so a visitor mid-chat
+    // is not bounced back to the lead form. Safe to drop once traffic has
+    // cycled (sessions are 24h).
+    const legacy = sessionStorage.getItem(`chatlayer.token.${botId}`);
+    if (legacy) {
+      sessionStorage.setItem(tokenKey(botId), legacy);
+      sessionStorage.removeItem(`chatlayer.token.${botId}`);
+      return legacy;
+    }
+    return memoryToken;
   } catch {
     return memoryToken;
   }
@@ -68,7 +79,7 @@ export default function Chat({
     if (!config.allowAnonymous && readToken(config.id)) setLeadDone(true);
     if (config.consentRequired) {
       try {
-        if (sessionStorage.getItem(`chatlayer.consent.${config.id}`)) setConsented(true);
+        if (sessionStorage.getItem(`chatnode.consent.${config.id}`) || sessionStorage.getItem(`chatlayer.consent.${config.id}`)) setConsented(true);
       } catch {
         /* storage blocked */
       }
@@ -244,7 +255,7 @@ export default function Chat({
             onClick={() => {
               setConsented(true);
               try {
-                sessionStorage.setItem(`chatlayer.consent.${config.id}`, "1");
+                sessionStorage.setItem(`chatnode.consent.${config.id}`, "1");
               } catch {
                 /* storage blocked */
               }
@@ -377,7 +388,7 @@ export default function Chat({
             </button>
           </form>
           {!hideBranding && (
-            <p className="pb-2 text-center text-[10px] text-neutral-400 dark:text-neutral-600">Protected by ChatLayer</p>
+            <p className="pb-2 text-center text-[10px] text-neutral-400 dark:text-neutral-600">Protected by Chatnode</p>
           )}
         </>
       )}

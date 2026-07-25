@@ -1,6 +1,6 @@
 import AuthForm from "@/components/dash/AuthForm";
 
-export const metadata = { title: "Log in - ChatLayer" };
+export const metadata = { title: "Log in - Chatnode" };
 export const dynamic = "force-dynamic";
 
 export default function LoginPage() {

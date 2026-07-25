@@ -8,15 +8,15 @@ const client = postgres(url!, { prepare: false });
 const db = drizzle(client, { schema: { organization, bot } });
 const webhook = process.env.N8N_WEBHOOK_URL || "http://localhost:5678/webhook/mock/chat";
 
-await db.insert(organization).values({ id: "demo-org", name: "ChatLayer Demo" }).onConflictDoNothing();
+await db.insert(organization).values({ id: "demo-org", name: "Chatnode Demo" }).onConflictDoNothing();
 
 const existing = await db.query.bot.findFirst({ where: eq(bot.id, "demo") });
 if (!existing) {
   await db.insert(bot).values({
     id: "demo",
     organizationId: "demo-org",
-    name: "ChatLayer Support",
-    welcome: "Hi! I'm ChatLayer Support. Ask me anything about your order, our products, or pricing.",
+    name: "Chatnode Support",
+    welcome: "Hi! I'm Chatnode Support. Ask me anything about your order, our products, or pricing.",
     color: "#1c69d4",
     suggestedPrompts: ["What can you do?", "Pricing plans", "Talk to a human"],
     webhookUrl: webhook,

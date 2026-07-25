@@ -1,16 +1,16 @@
 import MarketingShell from "@/components/MarketingShell";
 
-export const metadata = { title: "About - ChatLayer" };
+export const metadata = { title: "About - Chatnode" };
 
 const h2 = "pt-3 text-lg font-bold uppercase tracking-wide text-white";
 
 export default function AboutPage() {
   return (
-    <MarketingShell title="About ChatLayer" subtitle="A secure interface and router for n8n Chat workflows.">
+    <MarketingShell title="About Chatnode" subtitle="A secure interface and router for n8n Chat workflows.">
       <p>
-        n8n lets you build powerful chat workflows. ChatLayer is the layer that sits between those workflows and the outside world, so you
+        n8n lets you build powerful chat workflows. Chatnode is the layer that sits between those workflows and the outside world, so you
         can put an assistant on any website without exposing your webhook, getting hammered by abuse, or building auth and analytics
-        yourself. n8n is the brain; ChatLayer is the secure, branded interface in front of it.
+        yourself. n8n is the brain; Chatnode is the secure, branded interface in front of it.
       </p>
 
       <h2 className={h2}>What it does</h2>
@@ -25,7 +25,7 @@ export default function AboutPage() {
 
       <h2 className={h2}>What it is not</h2>
       <p>
-        ChatLayer is not a conversation platform and not a competitor to a full help-desk inbox. We route and secure; we do not archive
+        Chatnode is not a conversation platform and not a competitor to a full help-desk inbox. We route and secure; we do not archive
         chats. The content of messages is never stored on our side.
       </p>
     </MarketingShell>

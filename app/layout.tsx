@@ -7,7 +7,7 @@ const inter = Inter({ variable: "--font-body", subsets: ["latin"], weight: ["300
 const mono = JetBrains_Mono({ variable: "--font-jbmono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ChatLayer for n8n",
+  title: "Chatnode for n8n",
   description:
     "The secure, branded chat frontend for n8n workflows. Hidden webhooks, rate limiting, signed sessions.",
 };

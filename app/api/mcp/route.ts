@@ -7,7 +7,7 @@ import { assertHttpUrl } from "@/lib/ssrf";
 export const runtime = "nodejs";
 
 // Minimal MCP (Model Context Protocol) server over Streamable HTTP. Lets Claude
-// Desktop / Cursor manage a workspace's bots, authenticated by a ChatLayer API
+// Desktop / Cursor manage a workspace's bots, authenticated by a Chatnode API
 // key sent as `Authorization: Bearer sk_...` (or `X-API-Key`).
 
 const TOOLS = [
@@ -91,7 +91,7 @@ async function callTool(orgId: string, name: string, args: Record<string, unknow
 async function dispatch(orgId: string, method: string, params: Record<string, unknown> | undefined) {
   switch (method) {
     case "initialize":
-      return { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "ChatLayer", version: "1.0.0" } };
+      return { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "Chatnode", version: "1.0.0" } };
     case "ping":
       return {};
     case "tools/list":
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     return new NextResponse(null, { status: 202 });
   }
   if (!orgId) {
-    return NextResponse.json({ jsonrpc: "2.0", id, error: { code: -32001, message: "Unauthorized: provide a ChatLayer API key" } }, { status: 401 });
+    return NextResponse.json({ jsonrpc: "2.0", id, error: { code: -32001, message: "Unauthorized: provide a Chatnode API key" } }, { status: 401 });
   }
   try {
     const result = await dispatch(orgId, String(method), params);

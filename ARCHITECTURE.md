@@ -1,13 +1,13 @@
-# ChatLayer — How It Works
+# Chatnode — How It Works
 
-ChatLayer is a secure, branded chat frontend and gateway for **n8n Chat** workflows.
-n8n lets you build AI assistants; ChatLayer is the layer that sits between your
+Chatnode is a secure, branded chat frontend and gateway for **n8n Chat** workflows.
+n8n lets you build AI assistants; Chatnode is the layer that sits between your
 visitors and n8n so you can expose those assistants to real users without leaking
 your webhook, getting hammered by abuse, or building auth, rate limiting, and analytics
 yourself.
 
 The core idea in one line: **the browser never talks to n8n directly. It talks to
-ChatLayer, which authenticates, rate-limits, and meters every message before
+Chatnode, which authenticates, rate-limits, and meters every message before
 forwarding it to your n8n webhook.**
 
 ---
@@ -39,7 +39,7 @@ flowchart LR
   U[Dashboard user]
 
   P -->|mint session| GW
-  W -->|POST /api/chat/botId| GW[ChatLayer gateway<br/>Next.js on Vercel]
+  W -->|POST /api/chat/botId| GW[Chatnode gateway<br/>Next.js on Vercel]
   API -->|X-API-Key| GW
   U -->|better-auth| GW
 
@@ -48,7 +48,7 @@ flowchart LR
   N8N -->|streamed reply| GW
 ```
 
-ChatLayer is a single Next.js app that plays three roles:
+Chatnode is a single Next.js app that plays three roles:
 
 1. **The gateway** (`/api/chat/[botId]`, `/api/session/[botId]`) is the secure proxy
    in front of each bot n8n webhook.
@@ -112,11 +112,11 @@ Step by step, inside `app/api/chat/[botId]/route.ts`:
    session with the ip, geo country (Vercel `x-vercel-ip-country`), and the
    browser/OS/device parsed from the user agent (ua-parser-js), bumping a message
    counter. **Still no message text** -- only session metadata for analytics and
-   security. ChatLayer is a secure UI + router for n8n, not a chat archive.
+   security. Chatnode is a secure UI + router for n8n, not a chat archive.
 
 The **embed loader** (`public/embed.js`) is what makes the origin check meaningful:
 it runs in the *parent* page, calls `/api/session/[botId]` from there (so the browser
-sends the real parent Origin, which ChatLayer checks against the bot domain
+sends the real parent Origin, which Chatnode checks against the bot domain
 allowlist), then hands the resulting token to the iframe via the URL hash.
 
 ---
@@ -225,7 +225,7 @@ Neon pooler) in `lib/db/index.ts`. Push it with `npm run db:push`.
 - **IP ban**: org-scoped IP blocklist (`lib/ipbans.ts`), managed on the Security page or straight from the analytics session list, enforced at the gateway.
 - **MCP server**: `/api/mcp` exposes list_bots, create_bot, update_bot, and
   get_analytics to Claude/Cursor, authenticated by an org API key.
-- **White-label**: brand name, hide the "Protected by ChatLayer" footer, custom
+- **White-label**: brand name, hide the "Protected by Chatnode" footer, custom
   domain field.
 - **Theme**: light/dark toggle; dark is the BMW-M near-black look.
 
@@ -277,7 +277,7 @@ scripts/seed.ts                seeds the demo org + bot
    |---|---|
    | `DATABASE_URL` | Neon pooled connection string |
    | `BETTER_AUTH_SECRET` | 32+ char secret that signs auth sessions |
-   | `BETTER_AUTH_URL` | the production URL, e.g. `https://chatlayer.vercel.app` |
+   | `BETTER_AUTH_URL` | the production URL, e.g. `https://chatnode.app` |
    | `TRUST_PROXY_HOPS` | `1` (Vercel sits behind a proxy) |
    | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | for Google login |
 

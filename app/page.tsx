@@ -38,7 +38,7 @@ export default async function Home() {
             <svg className="h-3 w-3 text-[#1c69d4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
               <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" strokeLinejoin="round" />
             </svg>
-            ChatLayer &middot; for n8n
+            Chatnode &middot; for n8n
           </p>
           <h1 className="mt-6 text-4xl font-bold uppercase leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
             Your n8n chat,

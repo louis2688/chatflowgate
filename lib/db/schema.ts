@@ -64,6 +64,8 @@ export const organization = pgTable("organization", {
   brandName: text("brandName"),
   hideBranding: boolean("hideBranding").notNull().default(false),
   customDomain: text("customDomain"),
+  // Billing tier. Limits live in lib/plans.ts; enforced server-side.
+  plan: text("plan").notNull().default("free"),
   credits: integer("credits").notNull().default(100),
 });
 

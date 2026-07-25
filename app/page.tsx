@@ -69,7 +69,7 @@ export default async function Home() {
           <div className="mt-10">
             <p className="text-[11px] font-bold uppercase tracking-[1.5px] text-neutral-500">Embed any bot</p>
             <pre className="mt-2 overflow-x-auto border border-white/10 bg-[#0d0d0d] p-4 font-mono text-sm text-[#4a90e2]">
-              <code>{`<script src="https://your-host/embed.js" data-bot="BOT_ID" defer></script>`}</code>
+              <code>{`<script src="https://www.chatnode.app/embed.js" data-bot="BOT_ID" defer></script>`}</code>
             </pre>
           </div>
         </div>

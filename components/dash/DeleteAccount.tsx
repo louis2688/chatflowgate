@@ -18,7 +18,7 @@ export default function DeleteAccount() {
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         placeholder="Type DELETE to confirm"
-        className="rounded-lg border border-red-900/50 bg-white dark:bg-neutral-900/60 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none focus:border-red-500"
+        className="rounded-lg border border-red-300 bg-white dark:border-red-900/50 dark:bg-neutral-900/60 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none focus:border-red-500"
       />
       <div>
         <button
@@ -34,12 +34,12 @@ export default function DeleteAccount() {
               router.refresh();
             }
           }}
-          className="rounded-lg border border-red-700 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-900/30 disabled:opacity-40"
+          className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-40 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
         >
           {busy ? "Deleting..." : "Delete account"}
         </button>
       </div>
-      {err && <p className="text-sm text-red-400">{err}</p>}
+      {err && <p className="text-sm text-red-700 dark:text-red-400">{err}</p>}
     </div>
   );
 }

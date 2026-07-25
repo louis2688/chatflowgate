@@ -90,12 +90,12 @@ export default async function SettingsPage() {
 
       <section className={card}>
         <h2 className="text-lg font-semibold">API keys</h2>
-        <p className="mb-4 mt-1 text-sm text-neutral-600 dark:text-neutral-400">For server-to-server calls: <code className="rounded bg-black/40 px-1.5 py-0.5 font-mono text-xs text-emerald-300">X-API-Key</code> on <code className="rounded bg-black/40 px-1.5 py-0.5 font-mono text-xs text-emerald-300">/api/chat/&lt;botId&gt;</code>.</p>
+        <p className="mb-4 mt-1 text-sm text-neutral-600 dark:text-neutral-400">For server-to-server calls: <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-emerald-600 dark:bg-black/40 dark:text-emerald-300">X-API-Key</code> on <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-emerald-600 dark:bg-black/40 dark:text-emerald-300">/api/chat/&lt;botId&gt;</code>.</p>
         <ApiKeys keys={keys} />
       </section>
 
-      <section className="rounded-xl border border-red-900/40 bg-red-950/20 p-6">
-        <h2 className="text-lg font-semibold text-red-300">Danger zone</h2>
+      <section className="rounded-xl border border-red-200 bg-red-50 p-6 dark:border-red-900/40 dark:bg-red-950/20">
+        <h2 className="text-lg font-semibold text-red-700 dark:text-red-300">Danger zone</h2>
         <div className="mt-3"><DeleteAccount /></div>
       </section>
     </div>

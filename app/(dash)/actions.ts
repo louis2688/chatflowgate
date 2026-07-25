@@ -13,6 +13,7 @@ import { addIpBan, removeIpBan } from "@/lib/ipbans";
 import { assertHttpUrl } from "@/lib/ssrf";
 import { devTopUpAllowed } from "@/lib/config";
 import { requireContext } from "@/lib/server-auth";
+import { orgUsage } from "@/lib/usage";
 
 function lines(v: FormDataEntryValue | null): string[] {
   return String(v ?? "")
@@ -77,6 +78,10 @@ function botValues(formData: FormData, p: z.infer<typeof botSchema>) {
 
 export async function createBotAction(formData: FormData) {
   const { orgId } = await requireContext();
+  const usage = await orgUsage(orgId);
+  if (usage.bots >= usage.plan.maxBots) {
+    throw new Error(`Your ${usage.plan.label} plan allows ${usage.plan.maxBots} bot${usage.plan.maxBots === 1 ? "" : "s"}. Upgrade to add more.`);
+  }
   const p = botSchema.parse(Object.fromEntries(formData));
   const row = await createBot(orgId, botValues(formData, p));
   redirect(`/bots/${row.id}`);
@@ -114,11 +119,12 @@ export async function revokeApiKeyAction(formData: FormData) {
 export async function updateOrgAction(formData: FormData) {
   const { orgId, role } = await requireContext();
   if (role !== "owner" && role !== "admin") throw new Error("Not authorized");
+  const { plan } = await orgUsage(orgId);
   const brandName = String(formData.get("brandName") || "").slice(0, 80);
   const customDomain = String(formData.get("customDomain") || "").slice(0, 200);
   await db
     .update(organization)
-    .set({ brandName: brandName || null, hideBranding: formData.get("hideBranding") === "on", customDomain: customDomain || null })
+    .set({ brandName: brandName || null, hideBranding: plan.canHideBranding && formData.get("hideBranding") === "on", customDomain: customDomain || null })
     .where(eq(organization.id, orgId));
   revalidatePath("/settings");
 }
@@ -128,6 +134,10 @@ export async function updateOrgAction(formData: FormData) {
 export async function inviteMemberAction(formData: FormData) {
   const ctx = await requireContext();
   if (ctx.role !== "owner" && ctx.role !== "admin") throw new Error("Not authorized");
+  const usage = await orgUsage(ctx.orgId);
+  if (usage.seats >= usage.plan.maxMembers) {
+    throw new Error(`Your ${usage.plan.label} plan allows ${usage.plan.maxMembers} member${usage.plan.maxMembers === 1 ? "" : "s"}. Upgrade to invite more.`);
+  }
   const email = z.string().email().parse(String(formData.get("email")));
   const role = z.enum(["member", "admin"]).catch("member").parse(String(formData.get("role")));
 

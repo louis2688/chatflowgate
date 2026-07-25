@@ -90,7 +90,7 @@ export default function DocsPage() {
               <span className={strong}> capture a lead</span> first. Then drop one tag on your site:
             </p>
             <pre className={pre}>
-              <code>{`<script src="https://your-host/embed.js" data-bot="BOT_ID" defer></script>`}</code>
+              <code>{`<script src="https://www.chatnode.app/embed.js" data-bot="BOT_ID" defer></script>`}</code>
             </pre>
             <p className={p}>Add the domains that may use the bot to its origin allowlist. Anything not listed is refused a session.</p>
           </Section>
@@ -154,7 +154,7 @@ Content-Type: application/json
           <Section id="widget-api" title="Chat widget API">
             <p className={p}>The loader is configured with data attributes on the script tag:</p>
             <pre className={pre}>
-              <code>{`<script src="https://your-host/embed.js"
+              <code>{`<script src="https://www.chatnode.app/embed.js"
         data-bot="BOT_ID"          // required
         data-color="#1c69d4"       // launcher colour
         data-position="left"       // "left" or "right" (default)
@@ -301,7 +301,7 @@ plain text                     // raw token`}</code>
               <code>{`{
   "mcpServers": {
     "chatnode": {
-      "url": "https://your-host/api/mcp",
+      "url": "https://www.chatnode.app/api/mcp",
       "headers": { "Authorization": "Bearer sk_..." }
     }
   }
@@ -320,7 +320,7 @@ plain text                     // raw token`}</code>
               directly:
             </p>
             <pre className={pre}>
-              <code>{`curl -X POST https://your-host/api/chat/BOT_ID \\
+              <code>{`curl -X POST https://www.chatnode.app/api/chat/BOT_ID \\
   -H "X-API-Key: sk_..." -H "Content-Type: application/json" \\
   -d '{"message":"hello","sessionId":"crm-42"}'`}</code>
             </pre>

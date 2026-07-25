@@ -68,7 +68,7 @@ async function callTool(orgId: string, name: string, args: Record<string, unknow
         suggestedPrompts: [],
         allowedOrigins: [],
       });
-      return textResult({ id: b.id, embed: `<script src="https://your-host/embed.js" data-bot="${b.id}" defer></script>` });
+      return textResult({ id: b.id, embed: `<script src="${process.env.BETTER_AUTH_URL ?? "https://www.chatnode.app"}/embed.js" data-bot="${b.id}" defer></script>` });
     }
     case "update_bot": {
       const patch: Record<string, unknown> = {};

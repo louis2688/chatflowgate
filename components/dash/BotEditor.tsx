@@ -113,9 +113,10 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
   });
   const set = (patch: Partial<typeof s>) => setS((p) => ({ ...p, ...patch }));
 
-  const snippet = `<script src="https://your-host/embed.js" data-bot="${bot?.id ?? "BOT_ID"}" data-color="${s.color}" data-position="${s.position}" defer></script>`;
+  const origin = typeof window === "undefined" ? "https://www.chatnode.app" : window.location.origin;
+  const snippet = `<script src="${origin}/embed.js" data-bot="${bot?.id ?? "BOT_ID"}" data-color="${s.color}" data-position="${s.position}" defer></script>`;
   const tabBtn = (id: "settings" | "appearance", text: string) =>
-    <button type="button" onClick={() => setTab(id)} className={`flex-1 border-b-2 px-3 py-3 text-sm font-medium ${tab === id ? "border-emerald-500 text-emerald-500" : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}>{text}</button>;
+    <button type="button" onClick={() => setTab(id)} className={`flex-1 rounded-none border-b-2 px-3 py-3 text-sm font-medium ${tab === id ? "border-emerald-500 text-emerald-500" : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}>{text}</button>;
 
   return (
     <div>
@@ -277,12 +278,12 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
       </form>
 
       {editing && (
-        <div className="mt-6 rounded-xl border border-red-900/40 bg-red-950/10 p-5">
+        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/10">
           <h2 className="font-semibold text-red-500 dark:text-red-300">Danger zone</h2>
           <p className="mb-3 mt-1 text-sm text-neutral-600 dark:text-neutral-400">Deletes the bot. This cannot be undone.</p>
           <form action={deleteBotAction}>
             <input type="hidden" name="botId" value={bot!.id} />
-            <button type="submit" className="rounded-lg border border-red-700 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-900/20 dark:text-red-300">Delete bot</button>
+            <button type="submit" className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20">Delete bot</button>
           </form>
         </div>
       )}

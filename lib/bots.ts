@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "./db";
 import { bot, member, organization } from "./db/schema";
 import { readableText } from "./contrast";
+import { planOf } from "./plans";
 
 export type Bot = typeof bot.$inferSelect;
 export type PublicBotConfig = {
@@ -82,7 +83,9 @@ export function publicConfig(b: Bot): PublicBotConfig {
 
 export async function orgHideBranding(orgId: string): Promise<boolean> {
   const o = await db.query.organization.findFirst({ where: eq(organization.id, orgId) });
-  return o?.hideBranding ?? false;
+  // Checked at read time as well as on save, so a downgrade restores the badge
+  // even though the stored flag is still true.
+  return (o?.hideBranding ?? false) && planOf(o?.plan).canHideBranding;
 }
 
 export async function isOrgMember(userId: string, orgId: string): Promise<boolean> {

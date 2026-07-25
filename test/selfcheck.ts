@@ -8,6 +8,7 @@ import { assertHttpUrl } from "../lib/ssrf.ts";
 import { parseDelta } from "../lib/stream.ts";
 import { webhookAuthHeaders } from "../lib/webhook-auth.ts";
 import { readableText } from "../lib/contrast.ts";
+import { planOf, PLANS } from "../lib/plans.ts";
 
 process.env.SESSION_SECRET = "test-secret-0123456789012345678901234567";
 
@@ -145,5 +146,17 @@ assert.equal(readableText("#000000"), "#ffffff", "white text on black");
 assert.equal(readableText("#1c69d4"), "#ffffff", "white stays on the default brand blue");
 assert.equal(readableText("#ffdd00"), "#111111", "dark text on a light yellow brand");
 assert.equal(readableText("garbage"), "#ffffff", "invalid colour defaults to white");
+
+// --- plan limits ---
+// Must fail CLOSED: an unknown or tampered plan value can never unlock a paid tier.
+for (const bad of [null, undefined, "", "enterprise", "MAX", "pro "]) {
+  assert.equal(planOf(bad as string | null).id, "free", "unknown plan falls back to free");
+}
+assert.equal(planOf("pro").maxBots, 10);
+assert.equal(planOf("pro").maxMembers, 3);
+assert.equal(planOf("max").maxBots, 30);
+assert.equal(planOf("max").maxMembers, 6);
+assert.equal(PLANS.free.canHideBranding, false, "free cannot hide branding");
+assert.ok(PLANS.pro.canHideBranding && PLANS.max.canHideBranding, "paid tiers can hide branding");
 
 console.log("selfcheck: all assertions passed");

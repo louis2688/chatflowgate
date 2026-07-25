@@ -100,4 +100,4 @@ body {
 .md-body strong { font-weight: 600; }
 
 /* Buttons use a 25% rounded corner; circular icon/pill controls stay full-round */
-button:not(.rounded-full) { border-radius: 8px; }
+button:not(.rounded-full):not(.rounded-none) { border-radius: 8px; }

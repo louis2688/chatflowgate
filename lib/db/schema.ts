@@ -66,7 +66,13 @@ export const organization = pgTable("organization", {
   customDomain: text("customDomain"),
   // Billing tier. Limits live in lib/plans.ts; enforced server-side.
   plan: text("plan").notNull().default("free"),
-  credits: integer("credits").notNull().default(100),
+  // Messages used in the current billing period, and when that period began.
+  // The allowance rolls lazily on first use after the period expires.
+  allowanceUsed: integer("allowanceUsed").notNull().default(0),
+  periodStart: ts("periodStart").notNull().$defaultFn(now),
+  // Purchased top-up credits, used only after the monthly allowance runs out.
+  // These do not expire.
+  credits: integer("credits").notNull().default(0),
 });
 
 export const creditTxn = pgTable("creditTxn", {

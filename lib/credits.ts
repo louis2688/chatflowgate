@@ -1,30 +1,83 @@
-import { and, desc, eq, gt, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { creditTxn, organization } from "./db/schema";
+import { planOf } from "./plans";
 
-export type CreditPackage = { id: string; label: string; credits: number; price: number; popular?: boolean };
+// Pricing data lives in plans.ts (DB-free so it stays unit-testable).
+export { PACKAGES, type CreditPackage } from "./plans";
 
-export const PACKAGES: CreditPackage[] = [
-  { id: "starter", label: "Starter", credits: 5000, price: 19 },
-  { id: "growth", label: "Growth", credits: 10000, price: 39 },
-  { id: "professional", label: "Professional", credits: 25000, price: 70, popular: true },
-  { id: "ultimate", label: "Ultimate", credits: 100000, price: 199 },
-];
+export type Usage = {
+  planId: string;
+  allowance: number;
+  allowanceUsed: number;
+  allowanceLeft: number;
+  credits: number;
+  periodStart: Date;
+  periodEnd: Date;
+};
 
-export async function getBalance(orgId: string): Promise<number> {
+export async function getUsage(orgId: string): Promise<Usage> {
   const o = await db.query.organization.findFirst({ where: eq(organization.id, orgId) });
-  return o?.credits ?? 0;
+  const plan = planOf(o?.plan);
+  const start = o?.periodStart ?? new Date();
+  // Show the roll that WOULD happen on next use, so the dashboard never reports
+  // a stale period.
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + 1);
+  const rolled = end.getTime() <= Date.now();
+  const used = rolled ? 0 : (o?.allowanceUsed ?? 0);
+  const effectiveStart = rolled ? new Date() : start;
+  const effectiveEnd = new Date(effectiveStart);
+  effectiveEnd.setMonth(effectiveEnd.getMonth() + 1);
+  return {
+    planId: plan.id,
+    allowance: plan.monthlyMessages,
+    allowanceUsed: used,
+    allowanceLeft: Math.max(0, plan.monthlyMessages - used),
+    credits: o?.credits ?? 0,
+    periodStart: effectiveStart,
+    periodEnd: effectiveEnd,
+  };
 }
 
-// Atomic decrement guarded by balance > 0. Returns false when out of credits.
-export async function consumeCredit(orgId: string, reason = "message"): Promise<boolean> {
-  const res = await db
-    .update(organization)
-    .set({ credits: sql`${organization.credits} - 1` })
-    .where(and(eq(organization.id, orgId), gt(organization.credits, 0)))
-    .returning({ credits: organization.credits });
-  if (res.length === 0) return false;
-  await db.insert(creditTxn).values({ organizationId: orgId, delta: -1, reason }).catch(() => {});
+// Meter one user message. Spends the monthly allowance first, then purchased
+// credits. The period rolls lazily on first use after it expires.
+//
+// Done as ONE statement so concurrent messages cannot both pass the final unit:
+// every CASE reads the pre-update row, and the WHERE clause only matches when
+// capacity actually exists, so an out-of-quota org updates zero rows.
+export async function consumeMessage(orgId: string, reason = "message"): Promise<boolean> {
+  const o = await db.query.organization.findFirst({ where: eq(organization.id, orgId) });
+  if (!o) return false;
+  const limit = planOf(o.plan).monthlyMessages;
+
+  const rows = (await db.execute(sql`
+    update "organization" set
+      "periodStart" = case when "periodStart" < now() - interval '1 month' then now() else "periodStart" end,
+      "allowanceUsed" = case
+        when "periodStart" < now() - interval '1 month' then 1
+        when "allowanceUsed" < ${limit} then "allowanceUsed" + 1
+        else "allowanceUsed" end,
+      "credits" = case
+        when "periodStart" < now() - interval '1 month' then "credits"
+        when "allowanceUsed" < ${limit} then "credits"
+        when "credits" > 0 then "credits" - 1
+        else "credits" end
+    where "id" = ${orgId}
+      and ("periodStart" < now() - interval '1 month'
+           or "allowanceUsed" < ${limit}
+           or "credits" > 0)
+    returning "allowanceUsed", "credits"
+  `)) as unknown as Array<{ allowanceUsed: number; credits: number }>;
+
+  if (!rows || rows.length === 0) return false; // out of allowance and credits
+
+  // Only log a ledger row when a purchased credit was actually spent; allowance
+  // usage would otherwise flood the ledger.
+  const spentCredit = Number(rows[0].credits) < o.credits;
+  if (spentCredit) {
+    await db.insert(creditTxn).values({ organizationId: orgId, delta: -1, reason: `${reason}:overage` }).catch(() => {});
+  }
   return true;
 }
 

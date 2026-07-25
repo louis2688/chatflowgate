@@ -169,6 +169,8 @@ export async function purchaseCreditsAction(formData: FormData) {
   // Server-side gate. Hiding the button is not enough: this is a POST endpoint
   // any signed-in user can call directly.
   if (!devTopUpAllowed()) throw new Error("Purchases are not available yet.");
+  const { plan } = await orgUsage(orgId);
+  if (plan.id === "free") throw new Error("Top-up credits are available on paid plans. Upgrade to buy extra messages.");
   const pkg = PACKAGES.find((p) => p.id === String(formData.get("packageId")));
   if (!pkg) throw new Error("Unknown package");
   await addCredits(orgId, pkg.credits, `purchase:${pkg.id}`);

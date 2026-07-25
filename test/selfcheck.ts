@@ -8,7 +8,7 @@ import { assertHttpUrl } from "../lib/ssrf.ts";
 import { parseDelta } from "../lib/stream.ts";
 import { webhookAuthHeaders } from "../lib/webhook-auth.ts";
 import { readableText } from "../lib/contrast.ts";
-import { planOf, PLANS } from "../lib/plans.ts";
+import { planOf, PLANS, PACKAGES } from "../lib/plans.ts";
 
 process.env.SESSION_SECRET = "test-secret-0123456789012345678901234567";
 
@@ -158,5 +158,22 @@ assert.equal(planOf("max").maxBots, 30);
 assert.equal(planOf("max").maxMembers, 6);
 assert.equal(PLANS.free.canHideBranding, false, "free cannot hide branding");
 assert.ok(PLANS.pro.canHideBranding && PLANS.max.canHideBranding, "paid tiers can hide branding");
+
+// --- message allowances ---
+assert.equal(PLANS.free.monthlyMessages, 500);
+assert.equal(PLANS.pro.monthlyMessages, 10_000);
+assert.equal(PLANS.max.monthlyMessages, 50_000);
+
+// Dominance rule: a plan must include at least as many messages as its own price
+// would buy as a top-up pack. If this ever fails, buying packs beats subscribing
+// and the two systems start competing with each other.
+for (const plan of [PLANS.pro, PLANS.max]) {
+  const affordable = PACKAGES.filter((p) => p.price <= plan.price).map((p) => p.credits);
+  const best = affordable.length ? Math.max(...affordable) : 0;
+  assert.ok(
+    plan.monthlyMessages >= best,
+    `${plan.label} includes ${plan.monthlyMessages} but $${plan.price} buys ${best} as credits`,
+  );
+}
 
 console.log("selfcheck: all assertions passed");

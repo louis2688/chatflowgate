@@ -167,6 +167,18 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
 
         {showEmbed && (
           <div className="border-x border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/20">
+            <p className="text-sm font-medium">Add this to your site</p>
+            <ol className="mb-3 mt-1.5 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
+              <li>
+                Add the site&apos;s domain to <span className="font-medium">Allowed domains</span> in Settings first
+                {(bot?.allowedOrigins ?? []).length === 0 && (
+                  <span className="text-amber-600 dark:text-amber-500"> &mdash; none set yet, so the widget will be refused</span>
+                )}
+                .
+              </li>
+              <li>Paste the tag below just before the closing <code className="text-emerald-600 dark:text-emerald-400">&lt;/body&gt;</code> tag on any page of that site.</li>
+              <li>Reload the page. The launcher appears in the corner you chose under Appearance.</li>
+            </ol>
             <CopyField value={snippet} />
             <p className="mt-2 text-xs text-neutral-500">Direct link: <Link href={`/widget/${bot?.id}`} className="text-emerald-400 hover:underline">/widget/{bot?.id}</Link></p>
           </div>
@@ -194,8 +206,12 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                 <textarea id="welcome" name="welcome" rows={2} maxLength={500} value={s.welcome} onChange={(e) => set({ welcome: e.target.value })} className={field} />
               </div>
               <div>
-                <label className={label} htmlFor="allowedOrigins">Allowed domains (one per line, empty = any)</label>
+                <label className={label} htmlFor="allowedOrigins">Allowed domains (one per line)</label>
                 <textarea id="allowedOrigins" name="allowedOrigins" rows={2} defaultValue={(bot?.allowedOrigins ?? []).join("\n")} placeholder="https://www.customer.com" className={field} />
+                <p className="mt-1 text-xs text-neutral-500">
+                  Required before the widget will run on a site. Include the scheme, e.g.
+                  <code className="text-emerald-600 dark:text-emerald-400"> https://www.customer.com</code>. Anything not listed is refused a session.
+                </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>

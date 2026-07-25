@@ -25,7 +25,7 @@ export default function ContactPage() {
           <a href="mailto:privacy@chatnode.app" className={`${a} mt-2 inline-block text-sm`}>privacy@chatnode.app</a>
         </div>
       </div>
-      <p className="text-sm text-neutral-500">Replace these with your real addresses once the Chatnode.io mailboxes are set up.</p>
++
     </MarketingShell>
   );
 }

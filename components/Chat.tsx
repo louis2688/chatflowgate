@@ -26,8 +26,16 @@ function readToken(botId: string): string | null {
     // cycled (sessions are 24h).
     const legacy = sessionStorage.getItem(`chatlayer.token.${botId}`);
     if (legacy) {
-      sessionStorage.setItem(tokenKey(botId), legacy);
-      sessionStorage.removeItem(`chatlayer.token.${botId}`);
+      // Keep the token even if the migration write fails (quota, write-blocked
+      // storage). Bouncing a lead-capture visitor back to the form is the exact
+      // thing this fallback exists to prevent, so fail open, not closed.
+      memoryToken = legacy;
+      try {
+        sessionStorage.setItem(tokenKey(botId), legacy);
+        sessionStorage.removeItem(`chatlayer.token.${botId}`);
+      } catch {
+        // retried next call; idempotent
+      }
       return legacy;
     }
     return memoryToken;

@@ -277,7 +277,7 @@ scripts/seed.ts                seeds the demo org + bot
    |---|---|
    | `DATABASE_URL` | Neon pooled connection string |
    | `BETTER_AUTH_SECRET` | 32+ char secret that signs auth sessions |
-   | `BETTER_AUTH_URL` | the production URL, e.g. `https://chatnode.app` |
+   | `BETTER_AUTH_URL` | the origin that actually serves the app (must match it exactly, or Google login breaks) |
    | `TRUST_PROXY_HOPS` | `1` (Vercel sits behind a proxy) |
    | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | for Google login |
 

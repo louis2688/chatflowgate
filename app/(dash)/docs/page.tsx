@@ -188,8 +188,8 @@ Content-Type: application/json
             <p className={p}>
               The <span className={code}>sessionId</span> sent to n8n is what ties a conversation together, so use it as the memory key in
               your workflow. Signed-in dashboard users chat as <span className={code}>user:&lt;id&gt;</span>; server-to-server callers
-              control it themselves by passing <span className={code}>sessionId</span> in the request body. +
-              tokens entirely and require a signed-in member of the owning workspace.
+              control it themselves by passing <span className={code}>sessionId</span> in the request body. Lead capture bots issue no
+              token until the visitor submits their details, so the token doubles as proof the form was completed.
             </p>
           </Section>
 
@@ -251,8 +251,9 @@ plain text                     // raw token`}</code>
               cannot break out of its style block.
             </p>
             <pre className={pre}>
-              <code>{`.cl-bubble-bot { border-radius: 4px; }
-.cl-header { letter-spacing: 1px; text-transform: uppercase; }`}</code>
+              <code>{`.md-body a { color: #0b57d0; text-decoration: none; }
+.md-body code { background: rgba(0,0,0,.06); }
+.chat-scroll { scrollbar-width: none; }`}</code>
             </pre>
           </Section>
 

@@ -8,19 +8,22 @@ export const dynamic = "force-dynamic";
 
 const card = "rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/40";
 const packClass = (popular?: boolean) =>
-  `rounded-xl border p-5 ${popular ? "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/10" : "border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900/40"}`;
+  `flex h-full flex-col rounded-xl border p-5 ${popular ? "border-emerald-500/50 bg-emerald-500/10" : "border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900/40"}`;
 
 function PackageBody({ p }: { p: CreditPackage }) {
   return (
     <>
-      {p.popular && (
-        <span className="mb-2 inline-block rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-          Popular
-        </span>
-      )}
+      <span
+        aria-hidden={!p.popular}
+        className={`mb-2 inline-block self-start rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+          p.popular ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "invisible"
+        }`}
+      >
+        Popular
+      </span>
       <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{p.label}</p>
       <p className="mt-1 text-2xl font-semibold">${p.price}</p>
-      <p className="text-xs text-neutral-500">{p.credits.toLocaleString()} messages</p>
+      <p className="mb-4 text-xs text-neutral-500">{p.credits.toLocaleString()} messages</p>
     </>
   );
 }
@@ -74,7 +77,7 @@ export default async function BillingPage() {
         <h2 className="text-lg font-semibold">Plans</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {Object.values(PLANS).map((pl) => (
-            <div key={pl.id} className={`rounded-xl border p-4 ${pl.id === plan.id ? "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/10" : "border-neutral-200 dark:border-neutral-800"}`}>
+            <div key={pl.id} className={`rounded-xl border p-4 ${pl.id === plan.id ? "border-emerald-500/60 bg-emerald-500/10" : "border-neutral-200 dark:border-neutral-800"}`}>
               <div className="flex items-center justify-between">
                 <p className="font-medium">{pl.label}</p>
                 {pl.id === plan.id && <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium uppercase text-emerald-600 dark:text-emerald-400">Current</span>}
@@ -106,14 +109,14 @@ export default async function BillingPage() {
               <form key={p.id} action={purchaseCreditsAction} className={packClass(p.popular)}>
                 <input type="hidden" name="packageId" value={p.id} />
                 <PackageBody p={p} />
-                <button type="submit" className="mt-4 w-full rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-400">
+                <button type="submit" className="mt-auto w-full rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-400">
                   {stripeOn ? "Buy" : "Add (dev)"}
                 </button>
               </form>
             ) : (
               <div key={p.id} className={packClass(p.popular)}>
                 <PackageBody p={p} />
-                <button type="button" disabled className="mt-4 w-full cursor-not-allowed rounded-lg bg-neutral-200 px-3 py-2 text-sm font-medium text-neutral-500 dark:bg-neutral-800">
+                <button type="button" disabled className="mt-auto w-full cursor-not-allowed rounded-lg bg-neutral-200 px-3 py-2 text-sm font-medium text-neutral-500 dark:bg-neutral-800">
                   {plan.id === "free" ? "Paid plans only" : "Coming soon"}
                 </button>
               </div>

@@ -36,6 +36,8 @@ type PreviewState = {
   buttonText: string;
   // raw textarea text, one prompt per line
   suggestedPrompts: string;
+  widgetWidth: number;
+  widgetHeight: number;
 };
 
 function Avatar({ logoUrl, color }: { logoUrl: string; color: string }) {
@@ -100,7 +102,12 @@ function Preview({ s, open, setOpen }: { s: PreviewState; open: boolean; setOpen
     <div className={`flex h-full w-full rounded-xl bg-white p-6 shadow-inner dark:bg-neutral-900 ${align[s.position]}`}>
       <div className={`flex ${colReverse} ${clusterAlign} gap-2`}>
         {open ? (
-          <div className="h-[320px] w-[260px] max-w-full overflow-hidden rounded-xl shadow-xl"><ChatWindow s={s} /></div>
+          <div
+            className="max-h-full max-w-full overflow-hidden rounded-xl shadow-xl"
+            style={{ width: s.widgetWidth * 0.65, height: s.widgetHeight * 0.5 }}
+          >
+            <ChatWindow s={s} />
+          </div>
         ) : (
           <div className="max-w-[180px] rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
             {s.greeting || s.welcome || "Hi! How can I help?"}
@@ -129,13 +136,15 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     greeting: bot?.greeting ?? "",
     buttonText: bot?.buttonText ?? "Chat with us",
     suggestedPrompts: (bot?.suggestedPrompts ?? []).join("\n"),
+    widgetWidth: bot?.widgetWidth ?? 400,
+    widgetHeight: bot?.widgetHeight ?? 640,
     allowAnonymous: bot ? bot.allowAnonymous : true,
     geoMode: (bot?.geoMode as "off" | "allow" | "block") ?? "off",
   });
   const set = (patch: Partial<typeof s>) => setS((p) => ({ ...p, ...patch }));
 
   const origin = typeof window === "undefined" ? "https://www.chatnode.app" : window.location.origin;
-  const snippet = `<script src="${origin}/embed.js" data-bot="${bot?.id ?? "BOT_ID"}" data-color="${s.color}" data-position="${s.position}" defer></script>`;
+  const snippet = `<script src="${origin}/embed.js" data-bot="${bot?.id ?? "BOT_ID"}" data-color="${s.color}" data-position="${s.position}" data-width="${s.widgetWidth}" data-height="${s.widgetHeight}" defer></script>`;
   const tabBtn = (id: "settings" | "appearance", text: string) =>
     <button type="button" onClick={() => setTab(id)} className={`flex-1 rounded-none border-b-2 px-3 py-3 text-sm font-medium ${tab === id ? "border-emerald-500 text-emerald-500" : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}>{text}</button>;
 
@@ -268,6 +277,26 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                 </div>
               )}
               {s.widgetType === "inline" && <input type="hidden" name="position" value={s.position} />}
+              {s.widgetType === "popup" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className={label} htmlFor="widgetWidth">Width (px)</label>
+                    <input id="widgetWidth" name="widgetWidth" type="number" min={280} max={600} value={s.widgetWidth}
+                      onChange={(e) => { set({ widgetWidth: Number(e.target.value) || 0 }); setPreviewOpen(true); }} className={field} />
+                  </div>
+                  <div>
+                    <label className={label} htmlFor="widgetHeight">Height (px)</label>
+                    <input id="widgetHeight" name="widgetHeight" type="number" min={320} max={900} value={s.widgetHeight}
+                      onChange={(e) => { set({ widgetHeight: Number(e.target.value) || 0 }); setPreviewOpen(true); }} className={field} />
+                  </div>
+                </div>
+              )}
+              {s.widgetType === "inline" && (
+                <>
+                  <input type="hidden" name="widgetWidth" value={s.widgetWidth} />
+                  <input type="hidden" name="widgetHeight" value={s.widgetHeight} />
+                </>
+              )}
               <div>
                 <label className={label} htmlFor="buttonText">Button text</label>
                 <input id="buttonText" name="buttonText" maxLength={40} value={s.buttonText} onChange={(e) => set({ buttonText: e.target.value })} className={field} />

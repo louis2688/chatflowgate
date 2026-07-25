@@ -10,7 +10,17 @@
   var botId = script.getAttribute("data-bot");
   if (!botId) { console.error("[Chatnode] missing data-bot attribute"); return; }
   var color = script.getAttribute("data-color") || "#1c69d4";
-  var side = script.getAttribute("data-position") === "left" ? "left" : "right";
+  // Accepts "left"/"right" (legacy) and the four corners the dashboard emits.
+  var pos = (script.getAttribute("data-position") || "bottom-right").toLowerCase();
+  var side = pos.indexOf("left") !== -1 ? "left" : "right";
+  var vert = pos.indexOf("top") !== -1 ? "top" : "bottom";
+  // Panel size, clamped to the range the dashboard allows.
+  function px(name, dflt, lo, hi) {
+    var v = parseInt(script.getAttribute(name) || "", 10);
+    return isFinite(v) && v >= lo && v <= hi ? v : dflt;
+  }
+  var w = px("data-width", 400, 280, 600);
+  var h = px("data-height", 640, 320, 900);
 
   var chatIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
   var closeIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -18,8 +28,8 @@
   var frame = document.createElement("iframe");
   frame.title = "Chat";
   frame.style.cssText =
-    "position:fixed;bottom:92px;" + side + ":20px;" +
-    "width:min(400px,calc(100vw - 40px));height:min(640px,calc(100dvh - 120px));" +
+    "position:fixed;" + vert + ":92px;" + side + ":20px;" +
+    "width:min(" + w + "px,calc(100vw - 40px));height:min(" + h + "px,calc(100dvh - 120px));" +
     "border:0;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.28);" +
     "z-index:2147483000;display:none;background:#fff;";
 
@@ -43,7 +53,7 @@
   btn.setAttribute("aria-expanded", "false");
   btn.innerHTML = chatIcon;
   btn.style.cssText =
-    "position:fixed;bottom:20px;" + side + ":20px;width:56px;height:56px;border:0;" +
+    "position:fixed;" + vert + ":20px;" + side + ":20px;width:56px;height:56px;border:0;" +
     "border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;" +
     "background:" + color + ";box-shadow:0 8px 24px rgba(0,0,0,.22);z-index:2147483001;transition:transform .15s ease;";
   btn.onmouseenter = function () { btn.style.transform = "scale(1.06)"; };

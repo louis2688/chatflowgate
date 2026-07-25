@@ -6,7 +6,9 @@ export default function CopyField({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex items-stretch gap-2">
-      <code className="flex-1 overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-black/40 px-3 py-2 font-mono text-xs text-emerald-300">{value}</code>
+      {/* Deliberately fixed to black-on-white in BOTH themes: this is code to copy,
+          and a terminal look reads the same wherever it is pasted. */}
+      <code className="flex-1 overflow-x-auto rounded-lg border border-neutral-800 bg-black px-3 py-2 font-mono text-xs text-white">{value}</code>
       <button
         type="button"
         onClick={async () => {

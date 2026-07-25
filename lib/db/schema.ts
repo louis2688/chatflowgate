@@ -146,6 +146,9 @@ export const bot = pgTable("bot", {
   widgetType: text("widgetType").notNull().default("popup"),
   position: text("position").notNull().default("bottom-right"),
   buttonText: text("buttonText").notNull().default("Chat with us"),
+  // Popup panel size in px, passed to the embed loader as data attributes.
+  widgetWidth: integer("widgetWidth").notNull().default(400),
+  widgetHeight: integer("widgetHeight").notNull().default(640),
   greeting: text("greeting"),
   createdAt: ts("createdAt").notNull().$defaultFn(now),
 });

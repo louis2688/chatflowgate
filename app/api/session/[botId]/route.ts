@@ -6,6 +6,7 @@ import { issueSession, verifySession } from "@/lib/token";
 import { getBot, type Bot } from "@/lib/bots";
 import { assertPublicHost, safeFetch } from "@/lib/ssrf";
 import { webhookAuthHeaders } from "@/lib/webhook-auth";
+import { geoAllowed } from "@/lib/geo";
 import { recordLeadSession } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -63,6 +64,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     NextResponse.json({ error, ...extra }, { status, headers: cors });
 
   if (!originAllowed(req, bot.allowedOrigins ?? [])) return bad("origin_not_allowed", 403);
+  // Refuse before minting a token, so a fenced-out visitor never gets a session.
+  if (!geoAllowed(bot, clientGeo(req).country)) return bad("country_not_allowed", 403);
 
   const rl = await rateLimit(`session:${bot.id}:${clientIp(req)}`, 10, 60_000);
   if (!rl.ok) {

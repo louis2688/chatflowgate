@@ -20,6 +20,7 @@ const NAV: Array<[string, string]> = [
   ["voice-input", "Voice input"],
   ["mcp", "MCP server"],
   ["api", "Programmatic API"],
+  ["geofencing", "Geofencing"],
   ["security", "Security and limits"],
 ];
 
@@ -330,11 +331,25 @@ plain text                     // raw token`}</code>
             </p>
           </Section>
 
+          <Section id="geofencing" title="Geofencing">
+            <p className={p}>
+              Restrict a bot by country. Pick <span className={strong}>Allow only these countries</span> to serve a fixed set of markets,
+              or <span className={strong}>Block these countries</span> to keep specific ones out. Enter two-letter country codes
+              (<span className={code}>PH</span>, <span className={code}>US</span>, <span className={code}>SG</span>), one per line.
+            </p>
+            <p className={p}>
+              The check runs before a session token is issued, so a fenced-out visitor never gets one, and again on every message, so a
+              token minted elsewhere cannot be reused from a blocked country. Visitors we cannot place are refused under an allowlist
+              (fail closed) and admitted under a blocklist, since absence of a location is not evidence of a blocked one.
+            </p>
+          </Section>
+
           <Section id="security" title="Security and limits">
             <ul className="mt-2 space-y-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
               <li>&bull; <span className={strong}>Hidden webhook</span> - the n8n URL is a server-side field, never sent to the browser.</li>
               <li>&bull; <span className={strong}>Three caller modes</span> - workspace API key, signed-in member, or a visitor token bound to one bot.</li>
               <li>&bull; <span className={strong}>Rate limiting</span> - token buckets per session and per IP, tuned per bot, with spoof-resistant client IP resolution.</li>
+              <li>&bull; <span className={strong}>Geofencing</span> - per-bot country allowlist or blocklist, enforced at session issue and on every message.</li>
               <li>&bull; <span className={strong}>IP bans</span> - blocked addresses are refused at the gateway before any work happens.</li>
               <li>&bull; <span className={strong}>Origin allowlist</span> - only the domains you list can obtain a session.</li>
               <li>&bull; <span className={strong}>Input caps</span> - messages are limited to 4000 characters.</li>

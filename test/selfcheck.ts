@@ -9,6 +9,7 @@ import { parseDelta } from "../lib/stream.ts";
 import { webhookAuthHeaders } from "../lib/webhook-auth.ts";
 import { readableText } from "../lib/contrast.ts";
 import { planOf, PLANS, PACKAGES } from "../lib/plans.ts";
+import { geoAllowed } from "../lib/geo.ts";
 
 process.env.SESSION_SECRET = "test-secret-0123456789012345678901234567";
 
@@ -175,5 +176,21 @@ for (const plan of [PLANS.pro, PLANS.max]) {
     `${plan.label} includes ${plan.monthlyMessages} but $${plan.price} buys ${best} as credits`,
   );
 }
+
+// --- geofencing ---
+// Unknown country is deliberately asymmetric: deny under an allowlist (fail
+// closed), allow under a blocklist (cannot prove the visitor is blocked).
+const allowPH = { geoMode: "allow", geoCountries: ["PH", "SG"] };
+const blockRU = { geoMode: "block", geoCountries: ["RU"] };
+assert.equal(geoAllowed({ geoMode: "off", geoCountries: [] }, "RU"), true, "off allows everyone");
+assert.equal(geoAllowed(allowPH, "PH"), true, "allowlist admits a listed country");
+assert.equal(geoAllowed(allowPH, "US"), false, "allowlist refuses an unlisted country");
+assert.equal(geoAllowed(allowPH, null), false, "allowlist refuses an unknown country");
+assert.equal(geoAllowed(allowPH, "ph"), true, "country match is case-insensitive");
+assert.equal(geoAllowed(blockRU, "RU"), false, "blocklist refuses a listed country");
+assert.equal(geoAllowed(blockRU, "PH"), true, "blocklist admits everyone else");
+assert.equal(geoAllowed(blockRU, null), true, "blocklist admits an unknown country");
+assert.equal(geoAllowed({ geoMode: "allow", geoCountries: [] }, "PH"), true, "empty list is not a fence");
+assert.equal(geoAllowed({ geoMode: "garbage", geoCountries: ["RU"] }, "RU"), true, "unknown mode does not fence");
 
 console.log("selfcheck: all assertions passed");

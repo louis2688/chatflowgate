@@ -130,6 +130,9 @@ export const bot = pgTable("bot", {
   leadPhone: boolean("leadPhone").notNull().default(false),
   leadMessage: boolean("leadMessage").notNull().default(true),
   allowedOrigins: jsonb("allowedOrigins").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+  // Geofencing: "off" | "allow" (only these countries) | "block" (all but these).
+  geoMode: text("geoMode").notNull().default("off"),
+  geoCountries: jsonb("geoCountries").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
   ratePerSession: integer("ratePerSession").notNull().default(20),
   ratePerIp: integer("ratePerIp").notNull().default(60),
   rtl: boolean("rtl").notNull().default(false),

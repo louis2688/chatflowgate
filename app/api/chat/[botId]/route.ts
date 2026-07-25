@@ -6,6 +6,7 @@ import { getBot, isOrgMember } from "@/lib/bots";
 import { validateApiKey } from "@/lib/apikeys";
 import { recordSession } from "@/lib/store";
 import { isIpBanned } from "@/lib/ipbans";
+import { geoAllowed } from "@/lib/geo";
 import { assertPublicHost, safeFetch } from "@/lib/ssrf";
 import { consumeMessage } from "@/lib/credits";
 import { webhookAuthHeaders } from "@/lib/webhook-auth";
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (await isIpBanned(bot.organizationId, ip)) return bad("ip_banned", 403);
   const ua = req.headers.get("user-agent");
   const geo = clientGeo(req); // { country, region, city } from Vercel headers
+  if (!geoAllowed(bot, geo.country)) return bad("country_not_allowed", 403);
   // Cap the body before it is parsed into memory. base64 inflates ~4/3, so allow
   // the file budget plus slack for the message/JSON. Content-Length may be absent
   // (chunked); the platform body limit backstops that case.

@@ -36,6 +36,7 @@ const botSchema = z.object({
   consentText: z.string().max(1000).optional(),
   customCss: z.string().max(10000).optional(),
   maxFileSizeMb: z.coerce.number().int().min(1).max(25),
+  geoMode: z.enum(["off", "allow", "block"]).catch("off"),
   widgetType: z.enum(["popup", "inline"]).catch("popup"),
   position: z.enum(["bottom-right", "bottom-left", "top-right", "top-left"]).catch("bottom-right"),
   buttonText: z.string().max(40).optional(),
@@ -60,6 +61,12 @@ function botValues(formData: FormData, p: z.infer<typeof botSchema>) {
     leadMessage: formData.get("leadMessage") === "on",
     suggestedPrompts: lines(formData.get("suggestedPrompts")),
     allowedOrigins: lines(formData.get("allowedOrigins")),
+    geoMode: p.geoMode,
+    // Normalise to ISO 3166-1 alpha-2; anything else is dropped rather than
+    // stored, so a typo cannot silently widen or narrow the fence.
+    geoCountries: lines(formData.get("geoCountries"))
+      .map((c) => c.toUpperCase())
+      .filter((c) => /^[A-Z]{2}$/.test(c)),
     ratePerSession: p.ratePerSession,
     ratePerIp: p.ratePerIp,
     rtl: formData.get("rtl") === "on",

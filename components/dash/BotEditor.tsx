@@ -100,7 +100,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
   const editing = !!bot;
   const [tab, setTab] = useState<"settings" | "appearance">("settings");
   const [showEmbed, setShowEmbed] = useState(false);
-  const [s, setS] = useState<PreviewState & { allowAnonymous: boolean }>({
+  const [s, setS] = useState<PreviewState & { allowAnonymous: boolean; geoMode: "off" | "allow" | "block" }>({
     name: bot?.name ?? "",
     welcome: bot?.welcome ?? "Hi! How can I help you today?",
     color: bot?.color ?? "#1c69d4",
@@ -110,6 +110,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     greeting: bot?.greeting ?? "",
     buttonText: bot?.buttonText ?? "Chat with us",
     allowAnonymous: bot ? bot.allowAnonymous : true,
+    geoMode: (bot?.geoMode as "off" | "allow" | "block") ?? "off",
   });
   const set = (patch: Partial<typeof s>) => setS((p) => ({ ...p, ...patch }));
 
@@ -190,6 +191,30 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                   <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="leadPhone" defaultChecked={bot?.leadPhone ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> Phone</label>
                   <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="leadMessage" defaultChecked={bot ? bot.leadMessage : true} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> Message</label>
                 </div>
+              </div>
+              <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+                <label className={label} htmlFor="geoMode">Geofencing</label>
+                <select id="geoMode" name="geoMode" value={s.geoMode} onChange={(e) => set({ geoMode: e.target.value as "off" | "allow" | "block" })} className={field}>
+                  <option value="off">Off - allow every country</option>
+                  <option value="allow">Allow only these countries</option>
+                  <option value="block">Block these countries</option>
+                </select>
+                {s.geoMode !== "off" && (
+                  <div className="mt-3">
+                    <textarea
+                      name="geoCountries"
+                      rows={2}
+                      defaultValue={(bot?.geoCountries ?? []).join("\\n")}
+                      placeholder="PH&#10;US&#10;SG"
+                      className={field}
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">
+                      Two-letter country codes, one per line. Visitors are refused before a session is issued.
+                      {s.geoMode === "allow" && " Visitors we cannot locate are refused too."}
+                    </p>
+                  </div>
+                )}
+                {s.geoMode === "off" && <input type="hidden" name="geoCountries" value={(bot?.geoCountries ?? []).join("\\n")} />}
               </div>
               <WebhookAuth defaultType={(bot?.webhookAuthType as "none" | "basic" | "header") ?? "none"} defaultName={bot?.webhookAuthHeader ?? ""} defaultValue={bot?.webhookAuthValue ?? ""} />
             </div>

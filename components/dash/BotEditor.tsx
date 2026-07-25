@@ -34,6 +34,8 @@ type PreviewState = {
   position: string;
   greeting: string;
   buttonText: string;
+  // raw textarea text, one prompt per line
+  suggestedPrompts: string;
 };
 
 function Avatar({ logoUrl, color }: { logoUrl: string; color: string }) {
@@ -56,6 +58,23 @@ function ChatWindow({ s }: { s: PreviewState }) {
         <div className="max-w-[85%] rounded-xl border border-neutral-200 bg-white px-3 py-2 text-[13px] text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
           {s.welcome || "Hi! How can I help you today?"}
         </div>
+        {(() => {
+          const prompts = s.suggestedPrompts.split("\\n").map((x) => x.trim()).filter(Boolean);
+          if (prompts.length === 0) return null;
+          return (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {prompts.map((q, i) => (
+                <span
+                  key={i}
+                  className="rounded-full border px-2.5 py-1 text-[11px]"
+                  style={{ borderColor: s.color, color: s.color }}
+                >
+                  {q}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
       </div>
       <div className="flex items-center gap-2 border-t border-neutral-200 bg-white p-2.5 dark:border-neutral-700 dark:bg-neutral-900">
         <div className="flex-1 rounded-full border border-neutral-200 px-3 py-2 text-[13px] text-neutral-400 dark:border-neutral-700">Type a message...</div>
@@ -65,8 +84,7 @@ function ChatWindow({ s }: { s: PreviewState }) {
   );
 }
 
-function Preview({ s }: { s: PreviewState }) {
-  const [open, setOpen] = useState(false);
+function Preview({ s, open, setOpen }: { s: PreviewState; open: boolean; setOpen: (v: boolean) => void }) {
   if (s.widgetType === "inline") {
     return <div className="h-full w-full p-2"><ChatWindow s={s} /></div>;
   }
@@ -88,7 +106,7 @@ function Preview({ s }: { s: PreviewState }) {
             {s.greeting || s.welcome || "Hi! How can I help?"}
           </div>
         )}
-        <button type="button" onClick={() => setOpen((o) => !o)} className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full text-white shadow-lg" style={{ background: s.color }} aria-label={s.buttonText || "Open chat"}>
+        <button type="button" onClick={() => setOpen(!open)} className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full text-white shadow-lg" style={{ background: s.color }} aria-label={s.buttonText || "Open chat"}>
           {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, 22) : BotGlyph(22)}
         </button>
       </div>
@@ -100,6 +118,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
   const editing = !!bot;
   const [tab, setTab] = useState<"settings" | "appearance">("settings");
   const [showEmbed, setShowEmbed] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [s, setS] = useState<PreviewState & { allowAnonymous: boolean; geoMode: "off" | "allow" | "block" }>({
     name: bot?.name ?? "",
     welcome: bot?.welcome ?? "Hi! How can I help you today?",
@@ -109,6 +128,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     position: bot?.position ?? "bottom-right",
     greeting: bot?.greeting ?? "",
     buttonText: bot?.buttonText ?? "Chat with us",
+    suggestedPrompts: (bot?.suggestedPrompts ?? []).join("\n"),
     allowAnonymous: bot ? bot.allowAnonymous : true,
     geoMode: (bot?.geoMode as "off" | "allow" | "block") ?? "off",
   });
@@ -254,7 +274,24 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
               </div>
               <div>
                 <label className={label} htmlFor="greeting">Greeting message</label>
-                <textarea id="greeting" name="greeting" rows={2} maxLength={500} value={s.greeting} onChange={(e) => set({ greeting: e.target.value })} placeholder="Shown as a bubble before the visitor opens the chat" className={field} />
+                <textarea
+                  id="greeting"
+                  name="greeting"
+                  rows={2}
+                  maxLength={500}
+                  value={s.greeting}
+                  onChange={(e) => {
+                    set({ greeting: e.target.value });
+                    setPreviewOpen(false); // the greeting only shows on the collapsed bubble
+                  }}
+                  placeholder="Shown as a bubble before the visitor opens the chat"
+                  className={field}
+                />
+                <p className="mt-1 text-xs text-neutral-500">
+                  {s.widgetType === "inline"
+                    ? "Only used by the popup type, which has a closed state to show it in."
+                    : "Appears next to the launcher before the visitor opens the chat."}
+                </p>
               </div>
               <div>
                 <label className={label} htmlFor="logoUrl">Logo URL</label>
@@ -262,7 +299,15 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
               </div>
               <div>
                 <label className={label} htmlFor="suggestedPrompts">Suggested prompts (one per line)</label>
-                <textarea id="suggestedPrompts" name="suggestedPrompts" rows={2} defaultValue={(bot?.suggestedPrompts ?? []).join("\n")} className={field} />
+                <textarea
+                  id="suggestedPrompts"
+                  name="suggestedPrompts"
+                  rows={2}
+                  value={s.suggestedPrompts}
+                  onChange={(e) => set({ suggestedPrompts: e.target.value })}
+                  placeholder="What can you do?&#10;Talk to a human"
+                  className={field}
+                />
               </div>
 
               <details className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
@@ -280,7 +325,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <label className={label} htmlFor="maxFileSizeMb">Max file size (MB)</label>
-                      <input id="maxFileSizeMb" name="maxFileSizeMb" type="number" min={1} max={25} defaultValue={bot?.maxFileSizeMb ?? 5} className={field} />
+                      <input id="maxFileSizeMb" name="maxFileSizeMb" type="number" min={1} max={10} defaultValue={bot?.maxFileSizeMb ?? 5} className={field} />
                     </div>
                     <div className="sm:col-span-2">
                       <label className={label} htmlFor="allowedFileTypes">Allowed types (empty = any)</label>
@@ -290,6 +335,18 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                   <div>
                     <label className={label} htmlFor="customCss">Custom CSS</label>
                     <textarea id="customCss" name="customCss" rows={3} defaultValue={bot?.customCss ?? ""} placeholder=".md-body a { color: hotpink; }" className={`${field} font-mono text-xs`} />
+                    <div className="mt-1.5 text-xs leading-relaxed text-neutral-500">
+                      <p>Classes you can target:</p>
+                      <ul className="mt-1 space-y-0.5">
+                        <li><code className="text-emerald-600 dark:text-emerald-400">.md-body</code> - the bot reply. Style children too: <code className="text-emerald-600 dark:text-emerald-400">a, code, pre, ul, ol, blockquote, table, h1-h3</code></li>
+                        <li><code className="text-emerald-600 dark:text-emerald-400">.chat-scroll</code> - the scrolling message list</li>
+                        <li><code className="text-emerald-600 dark:text-emerald-400">.typing-dot</code> - the typing indicator dots</li>
+                      </ul>
+                      <p className="mt-1.5">
+                        Your brand colour is available as <code className="text-emerald-600 dark:text-emerald-400">var(--brand)</code>, and a readable
+                        text colour for it as <code className="text-emerald-600 dark:text-emerald-400">var(--brand-fg)</code>.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </details>
@@ -297,7 +354,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
           </div>
 
           <div className="min-h-[420px] bg-neutral-100 p-4 dark:bg-neutral-950/40 lg:min-h-[560px]">
-            <Preview s={s} />
+            <Preview s={s} open={previewOpen} setOpen={setPreviewOpen} />
           </div>
         </div>
       </form>

@@ -35,7 +35,7 @@ const botSchema = z.object({
   ratePerIp: z.coerce.number().int().min(1).max(5000),
   consentText: z.string().max(1000).optional(),
   customCss: z.string().max(10000).optional(),
-  maxFileSizeMb: z.coerce.number().int().min(1).max(25),
+  maxFileSizeMb: z.coerce.number().int().min(1).max(10),
   geoMode: z.enum(["off", "allow", "block"]).catch("off"),
   widgetType: z.enum(["popup", "inline"]).catch("popup"),
   position: z.enum(["bottom-right", "bottom-left", "top-right", "top-left"]).catch("bottom-right"),

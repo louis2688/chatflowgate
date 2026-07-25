@@ -282,7 +282,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                       <label className={label} htmlFor="maxFileSizeMb">Max file size (MB)</label>
                       <input id="maxFileSizeMb" name="maxFileSizeMb" type="number" min={1} max={25} defaultValue={bot?.maxFileSizeMb ?? 5} className={field} />
                     </div>
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className={label} htmlFor="allowedFileTypes">Allowed types (empty = any)</label>
                       <input id="allowedFileTypes" name="allowedFileTypes" defaultValue={(bot?.allowedFileTypes ?? []).join(", ")} placeholder="image/png, application/pdf" className={field} />
                     </div>

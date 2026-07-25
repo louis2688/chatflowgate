@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import CookieNotice from "@/components/CookieNotice";
+import Analytics from "@/components/Analytics";
 
 // Inter is the template's specified substitute for BMW Type Next Latin.
 const inter = Inter({ variable: "--font-body", subsets: ["latin"], weight: ["300", "400", "500", "700"] });
@@ -24,7 +26,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <CookieNotice />
+        <Analytics />
+      </body>
     </html>
   );
 }

@@ -33,6 +33,17 @@ export default function PrivacyPage() {
         owner&apos;s n8n workflow. Only enable it when you have a lawful basis to collect those details.
       </p>
 
+      <h2 className={h2}>Cookies and analytics</h2>
+      <p>
+        We set a sign-in cookie and store your theme and sidebar preferences. Those are strictly necessary and always on.
+        If you accept the cookie banner we also load <strong className="text-neutral-100">Google Analytics</strong> to see which pages
+        are visited; decline and it is never loaded. You can change your mind by clearing this site&apos;s data in your browser.
+      </p>
+      <p>
+        Analytics runs on our own marketing site only. It is never injected into the chat widget embedded on your site, so your
+        visitors are not tracked by us.
+      </p>
+
       <h2 className={h2}>How data is used and shared</h2>
       <p>
         To run and secure the service, show usage analytics, and forward leads to your own n8n webhook. We do not sell data. It is processed

@@ -14,8 +14,8 @@ export type Plan = {
 
 export const PLANS: Record<PlanId, Plan> = {
   free: { id: "free", label: "Free", price: 0, maxBots: 1, maxMembers: 1, canHideBranding: false },
-  pro: { id: "pro", label: "Pro", price: 29, maxBots: 10, maxMembers: 3, canHideBranding: true },
-  max: { id: "max", label: "Max", price: 79, maxBots: 30, maxMembers: 6, canHideBranding: true },
+  pro: { id: "pro", label: "Pro", price: 39, maxBots: 10, maxMembers: 3, canHideBranding: true },
+  max: { id: "max", label: "Max", price: 99, maxBots: 30, maxMembers: 6, canHideBranding: true },
 };
 
 // Unknown/legacy values fall back to the most restrictive plan rather than the

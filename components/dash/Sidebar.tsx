@@ -24,13 +24,25 @@ const NAV = [
   { href: "/settings", label: "Settings", icon: icon("M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6") },
 ];
 
-export default function Sidebar({ orgName, userEmail }: { orgName: string; userEmail: string }) {
+export default function Sidebar({
+  orgName,
+  userEmail,
+  variant = "desktop",
+  onNavigate,
+}: {
+  orgName: string;
+  userEmail: string;
+  // "mobile" renders inside the drawer: always expanded, no collapse toggle.
+  variant?: "desktop" | "mobile";
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [stored, setStored] = useState(false);
+  const collapsed = variant === "desktop" && stored;
 
   useEffect(() => {
     try {
-      setCollapsed(localStorage.getItem("sidebar") === "collapsed");
+      setStored(localStorage.getItem("sidebar") === "collapsed");
     } catch {
       /* storage blocked */
     }
@@ -38,7 +50,7 @@ export default function Sidebar({ orgName, userEmail }: { orgName: string; userE
 
   function toggle() {
     const c = !collapsed;
-    setCollapsed(c);
+    setStored(c);
     try {
       localStorage.setItem("sidebar", c ? "collapsed" : "expanded");
     } catch {
@@ -48,7 +60,7 @@ export default function Sidebar({ orgName, userEmail }: { orgName: string; userE
 
   return (
     <aside
-      className={`hidden shrink-0 flex-col border-r border-neutral-200 p-3 dark:border-neutral-800 sm:flex ${collapsed ? "w-16" : "w-60"}`}
+      className={`${variant === "mobile" ? "flex w-64" : `hidden sm:flex ${collapsed ? "w-16" : "w-60"}`} h-full shrink-0 flex-col overflow-y-auto border-r border-neutral-200 p-3 dark:border-neutral-800`}
     >
       <div className="m-stripe -mx-3 -mt-3 mb-3" />
       <div className={collapsed ? "flex flex-col items-center gap-2" : "flex items-center justify-between"}>
@@ -59,18 +71,20 @@ export default function Sidebar({ orgName, userEmail }: { orgName: string; userE
             <Logo className="h-auto w-[150px]" priority />
           )}
         </Link>
-        <button
-          type="button"
-          onClick={toggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand" : "Collapse"}
-          className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-900"
-        >
-          <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M9 3v18" />
-          </svg>
-        </button>
+        {variant === "desktop" && (
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand" : "Collapse"}
+            className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+          >
+            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 3v18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {!collapsed && <p className="mt-1 truncate px-2 text-xs text-neutral-500">{orgName}</p>}
@@ -82,6 +96,7 @@ export default function Sidebar({ orgName, userEmail }: { orgName: string; userE
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               title={collapsed ? item.label : undefined}
               className={`flex items-center gap-3 rounded-lg py-2 text-sm transition-colors ${collapsed ? "justify-center px-0" : "px-3"} ${
                 active

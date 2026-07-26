@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "check": "node test/selfcheck.ts",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
+    "db:push": "node --env-file-if-exists=.env.local node_modules/drizzle-kit/bin.cjs push",
+    "db:studio": "node --env-file-if-exists=.env.local node_modules/drizzle-kit/bin.cjs studio",
     "seed": "node --env-file=.env.local scripts/seed.ts"
   },
   "dependencies": {
@@ -22,6 +22,7 @@
     "postgres": "^3.4.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "stripe": "^22.3.2",
     "ua-parser-js": "^1.0.41",
     "undici": "^8.9.0",
     "zod": "^4.4.3"

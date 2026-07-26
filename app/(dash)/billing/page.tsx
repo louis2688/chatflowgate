@@ -2,7 +2,7 @@ import { requireContext } from "@/lib/server-auth";
 import { PACKAGES, getUsage, recentTxns, type CreditPackage } from "@/lib/credits";
 import { PLANS, planOf } from "@/lib/plans";
 import { devTopUpAllowed } from "@/lib/config";
-import { purchaseCreditsAction } from "@/app/(dash)/actions";
+import { changePlanAction, manageBillingAction, purchaseCreditsAction } from "@/app/(dash)/actions";
 import ActionForm from "@/components/dash/ActionForm";
 import SubmitButton from "@/components/dash/SubmitButton";
 
@@ -30,12 +30,13 @@ function PackageBody({ p }: { p: CreditPackage }) {
   );
 }
 
-export default async function BillingPage() {
+export default async function BillingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { orgId } = await requireContext();
   const [usage, txns] = await Promise.all([getUsage(orgId), recentTxns(orgId)]);
+  const checkout = (await searchParams).checkout;
   const plan = planOf(usage.planId);
   const stripeOn = !!process.env.STRIPE_SECRET_KEY;
-  const canTopUp = devTopUpAllowed() && plan.id !== "free";
+  const canTopUp = (stripeOn || devTopUpAllowed()) && plan.id !== "free";
   const pct = Math.min(100, Math.round((usage.allowanceUsed / usage.allowance) * 100));
   const resets = usage.periodEnd.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
@@ -47,6 +48,22 @@ export default async function BillingPage() {
           Each plan includes a monthly message allowance. Top-up credits cover anything beyond it and never expire.
         </p>
       </div>
+
+      {usage.billingStatus === "past_due" && (
+        <div className="rounded-lg border border-amber-400/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          Your last payment failed. Update your card via Manage billing to keep your plan active.
+        </div>
+      )}
+      {checkout === "success" && (
+        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+          Payment complete. Stripe confirms it via webhook within a few seconds - refresh if the numbers have not moved yet.
+        </div>
+      )}
+      {checkout === "cancelled" && (
+        <div className="rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/40 dark:text-neutral-400">
+          Checkout cancelled - nothing was charged.
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className={`${card} sm:col-span-2`}>
@@ -76,20 +93,56 @@ export default async function BillingPage() {
       </div>
 
       <div className={card}>
-        <h2 className="text-lg font-semibold">Plans</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Plans</h2>
+          {stripeOn && plan.id !== "free" && (
+            <ActionForm action={manageBillingAction}>
+              <SubmitButton
+                pendingLabel="Opening..."
+                className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              >
+                Manage billing
+              </SubmitButton>
+            </ActionForm>
+          )}
+        </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {Object.values(PLANS).map((pl) => (
             <div key={pl.id} className={`rounded-xl border p-4 ${pl.id === plan.id ? "border-emerald-500/60 bg-emerald-500/10" : "border-neutral-200 dark:border-neutral-800"}`}>
               <div className="flex items-center justify-between">
                 <p className="font-medium">{pl.label}</p>
-                {pl.id === plan.id && <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium uppercase text-emerald-600 dark:text-emerald-400">Current</span>}
+                {pl.id === plan.id && (
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium uppercase text-emerald-600 dark:text-emerald-400">
+                    Current
+                  </span>
+                )}
               </div>
               <p className="mt-1 text-2xl font-semibold">${pl.price}<span className="text-sm font-normal text-neutral-500">/mo</span></p>
+              {pl.id === plan.id && usage.renewsAt && (
+                <p className="mt-0.5 text-[11px] text-neutral-500">
+                  Renews {usage.renewsAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                </p>
+              )}
               <ul className="mt-2 space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <li>{pl.monthlyMessages.toLocaleString()} messages / month</li>
                 <li>{pl.maxBots} bot{pl.maxBots === 1 ? "" : "s"}, {pl.maxMembers} seat{pl.maxMembers === 1 ? "" : "s"}</li>
                 <li>{pl.canHideBranding ? "Badge removed" : "Chatnode badge shown"}</li>
               </ul>
+              {stripeOn && pl.id !== plan.id && (
+                <ActionForm action={changePlanAction} className="mt-3">
+                  <input type="hidden" name="planId" value={pl.id} />
+                  <SubmitButton
+                    pendingLabel="Redirecting..."
+                    className={`w-full rounded-lg px-3 py-1.5 text-sm font-medium ${
+                      pl.price > plan.price
+                        ? "bg-emerald-500 text-white hover:bg-emerald-400"
+                        : "border border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                    }`}
+                  >
+                    {pl.id === "free" ? "Downgrade" : pl.price > plan.price ? "Upgrade" : "Switch"}
+                  </SubmitButton>
+                </ActionForm>
+              )}
             </div>
           ))}
         </div>
@@ -99,6 +152,8 @@ export default async function BillingPage() {
         <h2 className="text-lg font-semibold">Top up</h2>
         {plan.id === "free" ? (
           <p className="mb-3 mt-1 text-sm text-neutral-500">Top-up credits are available on paid plans. Upgrade to buy extra messages.</p>
+        ) : stripeOn ? (
+          <p className="mb-3 mt-1 text-xs text-neutral-500">Secure checkout via Stripe. Credits land as soon as the payment is confirmed.</p>
         ) : canTopUp ? (
           <p className="mb-3 mt-1 text-xs text-amber-500">Dev mode: purchases top up instantly with no payment. This is disabled in production.</p>
         ) : (

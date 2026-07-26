@@ -9,6 +9,8 @@ import { invitation, member, organization, user } from "@/lib/db/schema";
 import { createBot, deleteBot, updateBot } from "@/lib/bots";
 import { createApiKey, revokeApiKey } from "@/lib/apikeys";
 import { PACKAGES, addCredits } from "@/lib/credits";
+import { PLANS, planOf, type PlanId } from "@/lib/plans";
+import { appBaseUrl, ensureStripeCustomer, planPriceId, stripe, stripeEnabled } from "@/lib/stripe";
 import { addIpBan, removeIpBan } from "@/lib/ipbans";
 import { assertHttpUrl } from "@/lib/ssrf";
 import { devTopUpAllowed } from "@/lib/config";
@@ -77,7 +79,8 @@ function botValues(formData: FormData, p: z.infer<typeof botSchema>) {
     customCss: p.customCss || null,
     widgetType: p.widgetType,
     position: p.position,
-    buttonText: p.buttonText || "Chat with us",
+    // ?? not ||: an intentionally cleared field means an icon-only launcher.
+    buttonText: p.buttonText ?? "Chat with us",
     widgetWidth: p.widgetWidth,
     widgetHeight: p.widgetHeight,
     greeting: p.greeting || null,
@@ -225,21 +228,118 @@ export async function inviteMemberAction(_prev: ActionResult | null, formData: F
   });
 }
 
-// ponytail: dev top-up. With STRIPE_SECRET_KEY set, create a Checkout session and
-// redirect here instead, fulfilling via webhook. Not wired without keys.
 export async function purchaseCreditsAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   return run(async () => {
   const { orgId } = await requireContext();
-  // Server-side gate. Hiding the button is not enough: this is a POST endpoint
-  // any signed-in user can call directly.
-  if (!devTopUpAllowed()) throw new Error("Purchases are not available yet.");
   const { plan } = await orgUsage(orgId);
   if (plan.id === "free") throw new Error("Top-up credits are available on paid plans. Upgrade to buy extra messages.");
   const pkg = PACKAGES.find((p) => p.id === String(formData.get("packageId")));
   if (!pkg) throw new Error("Unknown package");
+
+  if (stripeEnabled()) {
+    const s = stripe()!;
+    const session = await s.checkout.sessions.create({
+      mode: "payment",
+      customer: await ensureStripeCustomer(orgId),
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: pkg.price * 100,
+            product_data: { name: `Chatnode ${pkg.label} pack - ${pkg.credits.toLocaleString()} messages` },
+          },
+        },
+      ],
+      // Fulfilled by the webhook (checkout.session.completed), not here.
+      metadata: { kind: "package", orgId, packageId: pkg.id },
+      success_url: `${appBaseUrl()}/billing?checkout=success`,
+      cancel_url: `${appBaseUrl()}/billing?checkout=cancelled`,
+    });
+    if (!session.url) throw new Error("Stripe did not return a checkout URL.");
+    redirect(session.url);
+  }
+
+  // Server-side gate. Hiding the button is not enough: this is a POST endpoint
+  // any signed-in user can call directly.
+  if (!devTopUpAllowed()) throw new Error("Purchases are not available yet.");
   await addCredits(orgId, pkg.credits, `purchase:${pkg.id}`);
   revalidatePath("/billing");
   return `${pkg.credits.toLocaleString()} credits added.`;
+  });
+}
+
+// Plan changes go through Stripe Checkout (no subscription yet) or an in-place
+// subscription update (existing one, prorated). The webhook is the source of
+// truth for org.plan on new subscriptions and cancellations; direct paid->paid
+// switches apply immediately because the outcome is known synchronously.
+export async function changePlanAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
+    const ctx = await requireContext();
+    if (ctx.role !== "owner" && ctx.role !== "admin") throw new Error("Not authorized");
+    if (!stripeEnabled()) throw new Error("Checkout is not live yet.");
+    const target = String(formData.get("planId"));
+    if (!Object.hasOwn(PLANS, target)) throw new Error("Unknown plan");
+    const planId = target as PlanId;
+    const org = await db.query.organization.findFirst({ where: eq(organization.id, ctx.orgId) });
+    if (!org) throw new Error("Workspace not found.");
+    if (planId === planOf(org.plan).id) return "You are already on this plan.";
+    const s = stripe()!;
+
+    if (planId === "free") {
+      if (!org.stripeSubscriptionId) {
+        await db.update(organization).set({ plan: "free" }).where(eq(organization.id, ctx.orgId));
+        revalidatePath("/billing");
+        return "Moved to the Free plan.";
+      }
+      await s.subscriptions.update(org.stripeSubscriptionId, { cancel_at_period_end: true });
+      revalidatePath("/billing");
+      return "Your plan will drop to Free at the end of the billing period.";
+    }
+
+    const price = await planPriceId(planId);
+
+    if (org.stripeSubscriptionId) {
+      const sub = await s.subscriptions.retrieve(org.stripeSubscriptionId);
+      const item = sub.items.data[0];
+      if (item) {
+        await s.subscriptions.update(sub.id, {
+          items: [{ id: item.id, price }],
+          proration_behavior: "create_prorations",
+          cancel_at_period_end: false,
+        });
+        await db.update(organization).set({ plan: planId }).where(eq(organization.id, ctx.orgId));
+        revalidatePath("/billing");
+        return `Switched to ${PLANS[planId].label}.`;
+      }
+    }
+
+    const session = await s.checkout.sessions.create({
+      mode: "subscription",
+      customer: await ensureStripeCustomer(ctx.orgId),
+      line_items: [{ price, quantity: 1 }],
+      metadata: { kind: "plan", orgId: ctx.orgId, planId },
+      subscription_data: { metadata: { orgId: ctx.orgId, planId } },
+      success_url: `${appBaseUrl()}/billing?checkout=success`,
+      cancel_url: `${appBaseUrl()}/billing?checkout=cancelled`,
+    });
+    if (!session.url) throw new Error("Stripe did not return a checkout URL.");
+    redirect(session.url);
+  });
+}
+
+// Stripe Billing Portal: invoices, card updates, cancellation.
+export async function manageBillingAction(_prev: ActionResult | null, _formData: FormData): Promise<ActionResult> {
+  return run(async () => {
+    const ctx = await requireContext();
+    if (ctx.role !== "owner" && ctx.role !== "admin") throw new Error("Not authorized");
+    if (!stripeEnabled()) throw new Error("Checkout is not live yet.");
+    const s = stripe()!;
+    const session = await s.billingPortal.sessions.create({
+      customer: await ensureStripeCustomer(ctx.orgId),
+      return_url: `${appBaseUrl()}/billing`,
+    });
+    redirect(session.url);
   });
 }
 

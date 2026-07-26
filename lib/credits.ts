@@ -14,6 +14,9 @@ export type Usage = {
   credits: number;
   periodStart: Date;
   periodEnd: Date;
+  // Stripe subscription mirror, for the billing page banner/renewal line.
+  billingStatus: string | null;
+  renewsAt: Date | null;
 };
 
 export async function getUsage(orgId: string): Promise<Usage> {
@@ -37,6 +40,8 @@ export async function getUsage(orgId: string): Promise<Usage> {
     credits: o?.credits ?? 0,
     periodStart: effectiveStart,
     periodEnd: effectiveEnd,
+    billingStatus: o?.stripeStatus ?? null,
+    renewsAt: o?.stripePeriodEnd ?? null,
   };
 }
 
@@ -46,9 +51,13 @@ export async function getUsage(orgId: string): Promise<Usage> {
 // Done as ONE statement so concurrent messages cannot both pass the final unit:
 // every CASE reads the pre-update row, and the WHERE clause only matches when
 // capacity actually exists, so an out-of-quota org updates zero rows.
-export async function consumeMessage(orgId: string, reason = "message"): Promise<boolean> {
+// The result records WHICH bucket paid, so a failed upstream call can refund
+// the same one (see refundMessage).
+export type ChargeResult = { ok: false } | { ok: true; spentCredit: boolean };
+
+export async function consumeMessage(orgId: string, reason = "message"): Promise<ChargeResult> {
   const o = await db.query.organization.findFirst({ where: eq(organization.id, orgId) });
-  if (!o) return false;
+  if (!o) return { ok: false };
   const limit = planOf(o.plan).monthlyMessages;
 
   const rows = (await db.execute(sql`
@@ -70,7 +79,7 @@ export async function consumeMessage(orgId: string, reason = "message"): Promise
     returning "allowanceUsed", "credits"
   `)) as unknown as Array<{ allowanceUsed: number; credits: number }>;
 
-  if (!rows || rows.length === 0) return false; // out of allowance and credits
+  if (!rows || rows.length === 0) return { ok: false }; // out of allowance and credits
 
   // Only log a ledger row when a purchased credit was actually spent; allowance
   // usage would otherwise flood the ledger.
@@ -78,7 +87,20 @@ export async function consumeMessage(orgId: string, reason = "message"): Promise
   if (spentCredit) {
     await db.insert(creditTxn).values({ organizationId: orgId, delta: -1, reason: `${reason}:overage` }).catch(() => {});
   }
-  return true;
+  return { ok: true, spentCredit };
+}
+
+// Compensate a charge whose upstream call failed outright: the visitor got no
+// answer, so the org should not pay. Refunds the bucket the charge came from --
+// purchased credits get a ledger row (pairing the -1 overage entry); the
+// allowance never hits the ledger, so it is decremented directly, floored at 0
+// in case the period rolled between charge and refund.
+export async function refundMessage(orgId: string, spentCredit: boolean, reason = "refund:upstream_failed"): Promise<void> {
+  if (spentCredit) {
+    await addCredits(orgId, 1, reason);
+  } else {
+    await db.execute(sql`update "organization" set "allowanceUsed" = greatest("allowanceUsed" - 1, 0) where "id" = ${orgId}`);
+  }
 }
 
 export async function addCredits(orgId: string, amount: number, reason: string): Promise<void> {

@@ -8,7 +8,7 @@ import { recordSession } from "@/lib/store";
 import { isIpBanned } from "@/lib/ipbans";
 import { geoAllowed } from "@/lib/geo";
 import { assertPublicHost, safeFetch } from "@/lib/ssrf";
-import { consumeMessage } from "@/lib/credits";
+import { consumeMessage, refundMessage } from "@/lib/credits";
 import { webhookAuthHeaders } from "@/lib/webhook-auth";
 import { parseDelta } from "@/lib/stream";
 import { auth } from "@/lib/auth";
@@ -107,8 +107,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     return bad("upstream_error", 502);
   }
 
-  // Billing: 1 credit per user message (charged to the bot's org).
-  if (!(await consumeMessage(bot.organizationId))) return bad("out_of_credits", 402);
+  // Billing: 1 credit per user message (charged to the bot's org). Refunded in
+  // the stream if the upstream call fails before producing any reply.
+  const charge = await consumeMessage(bot.organizationId);
+  if (!charge.ok) return bad("out_of_credits", 402);
 
   const headers: Record<string, string> = { "Content-Type": "application/json", ...webhookAuthHeaders(bot) };
 
@@ -132,7 +134,12 @@ export async function POST(req: NextRequest, { params }: Params) {
           redirect: "error",
         });
         if (!upstream.ok || !upstream.body) {
-          push(FALLBACK);
+          // Status only, never the response body: enough to diagnose, no PII.
+          console.error(`[chat] bot=${bot.id} upstream_status=${upstream.status}`);
+          await refundMessage(bot.organizationId, charge.spentCredit).catch(() => {});
+          // Only the owning org's members see the real reason; visitors get the
+          // generic fallback so bot internals never leak.
+          push(userId ? `The n8n webhook returned ${upstream.status}. If this is 404, check the workflow's Active toggle.` : FALLBACK);
         } else {
           const reader = upstream.body.getReader();
           const decoder = new TextDecoder();
@@ -149,10 +156,18 @@ export async function POST(req: NextRequest, { params }: Params) {
           }
           push(parseDelta(buf));
         }
-      } catch {
-        push(FALLBACK);
+      } catch (e) {
+        const name = e instanceof Error ? e.name : "unknown";
+        console.error(`[chat] bot=${bot.id} upstream_error=${name}`);
+        // A partial reply means n8n did run the workflow; only refund when the
+        // failure came before any content arrived.
+        if (!full) await refundMessage(bot.organizationId, charge.spentCredit).catch(() => {});
+        push(userId ? (name === "TimeoutError" ? "The n8n webhook timed out after 120s." : `Could not reach the n8n webhook (${name}).`) : FALLBACK);
       }
-      if (!full) push(FALLBACK);
+      if (!full) {
+        console.error(`[chat] bot=${bot.id} upstream_empty=true`);
+        push(userId ? "The n8n webhook answered with no extractable reply text - check the workflow's response format." : FALLBACK);
+      }
       // Record session metadata only (ip, geo, parsed UA). Never store message text.
       // Skipped when the caller is a signed-in member of the owning org: that is
       // the live-preview path, and logging it would put the operator's own IP

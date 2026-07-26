@@ -73,6 +73,23 @@ export const organization = pgTable("organization", {
   // Purchased top-up credits, used only after the monthly allowance runs out.
   // These do not expire.
   credits: integer("credits").notNull().default(0),
+  // Stripe linkage. Null until the first checkout; the subscription id is
+  // present only while a paid-plan subscription exists.
+  stripeCustomerId: text("stripeCustomerId"),
+  stripeSubscriptionId: text("stripeSubscriptionId"),
+  // Mirror of the Stripe subscription: "active" | "past_due" | "canceled" |
+  // null (never subscribed). Drives the payment-trouble banner on /billing.
+  stripeStatus: text("stripeStatus"),
+  stripePeriodEnd: ts("stripePeriodEnd"),
+});
+
+// Processed Stripe webhook deliveries. The unique event id makes redeliveries
+// no-ops at the door, instead of relying on every handler being idempotent.
+export const stripeEvent = pgTable("stripeEvent", {
+  id: text("id").primaryKey().$defaultFn(uid),
+  stripeEventId: text("stripeEventId").notNull().unique(),
+  type: text("type").notNull(),
+  processedAt: ts("processedAt").notNull().$defaultFn(now),
 });
 
 export const creditTxn = pgTable("creditTxn", {

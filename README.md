@@ -90,6 +90,8 @@ Keys are org-scoped and can only reach bots in the same organization.
 | `ALLOWED_ORIGINS` | no | Global extra origins allowed to call the API (per-bot allowlists are set in the dashboard). |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | no | Enables "Continue with Google" SSO. |
 | `N8N_WEBHOOK_URL` | no | Only used by `npm run seed` for the demo bot. |
+| `STRIPE_SECRET_KEY` | no | Enables real Stripe checkout for plans and credit packs (dev top-up otherwise). |
+| `STRIPE_WEBHOOK_SECRET` | with Stripe | Verifies webhook deliveries to `/api/stripe/webhook`. |
 
 ## Enable Google login
 

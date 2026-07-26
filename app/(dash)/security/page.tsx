@@ -1,6 +1,8 @@
 import { requireContext } from "@/lib/server-auth";
 import { listIpBans } from "@/lib/ipbans";
 import { banIpAction, unbanIpAction } from "@/app/(dash)/actions";
+import ActionForm from "@/components/dash/ActionForm";
+import SubmitButton from "@/components/dash/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +23,11 @@ export default async function SecurityPage() {
 
       <div className={card}>
         <h2 className="mb-3 text-lg font-semibold">Ban an IP</h2>
-        <form action={banIpAction} className="flex flex-wrap items-center gap-2">
+        <ActionForm action={banIpAction} className="flex flex-wrap items-center gap-2">
           <input name="ip" required placeholder="e.g. 203.0.113.9" className={`${field} font-mono`} />
           <input name="reason" placeholder="Reason (optional)" className={field} />
-          <button type="submit" className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-400">Ban IP</button>
-        </form>
+          <SubmitButton pendingLabel="Banning..." className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-400">Ban IP</SubmitButton>
+        </ActionForm>
         <p className="mt-2 text-xs text-neutral-500">Tip: you can also ban an IP straight from the Recent sessions table in Analytics.</p>
       </div>
 
@@ -41,10 +43,10 @@ export default async function SecurityPage() {
                   {b.reason || "no reason"} &middot; {new Date(b.createdAt).toLocaleDateString()}
                 </span>
               </span>
-              <form action={unbanIpAction}>
+              <ActionForm action={unbanIpAction}>
                 <input type="hidden" name="banId" value={b.id} />
-                <button type="submit" className="shrink-0 text-xs text-neutral-500 hover:text-neutral-300">Unban</button>
-              </form>
+                <SubmitButton pendingLabel="..." className="shrink-0 text-xs text-neutral-500 hover:text-neutral-300">Unban</SubmitButton>
+              </ActionForm>
             </li>
           ))}
         </ul>

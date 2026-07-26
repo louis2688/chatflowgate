@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { invitation, member, organization, user } from "@/lib/db/schema";
 import { listApiKeys } from "@/lib/apikeys";
 import { inviteMemberAction, updateOrgAction } from "@/app/(dash)/actions";
+import ActionForm from "@/components/dash/ActionForm";
+import SubmitButton from "@/components/dash/SubmitButton";
 import ApiKeys from "@/components/dash/ApiKeys";
 import NameForm from "@/components/dash/NameForm";
 import DeleteAccount from "@/components/dash/DeleteAccount";
@@ -41,7 +43,7 @@ export default async function SettingsPage() {
       <section className={card}>
         <h2 className="text-lg font-semibold">White-label branding</h2>
         <p className="mb-4 mt-1 text-sm text-neutral-600 dark:text-neutral-400">Rebrand the dashboard and widgets for your clients.</p>
-        <form action={updateOrgAction} className="space-y-4">
+        <ActionForm action={updateOrgAction} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={label} htmlFor="brandName">Brand name</label>
@@ -56,8 +58,8 @@ export default async function SettingsPage() {
             <input type="checkbox" name="hideBranding" defaultChecked={org?.hideBranding ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-900" />
             Hide &quot;Protected by Chatnode&quot; footer
           </label>
-          <button type="submit" className="rounded-lg bg-emerald-500 px-5 py-2.5 font-medium text-white hover:bg-emerald-400">Save branding</button>
-        </form>
+          <SubmitButton pendingLabel="Saving..." className="rounded-lg bg-emerald-500 px-5 py-2.5 font-medium text-white hover:bg-emerald-400">Save branding</SubmitButton>
+        </ActionForm>
       </section>
 
       <section className={card}>
@@ -77,14 +79,14 @@ export default async function SettingsPage() {
             </li>
           ))}
         </ul>
-        <form action={inviteMemberAction} className="mt-4 flex flex-wrap items-center gap-2">
+        <ActionForm action={inviteMemberAction} className="mt-4 flex flex-wrap items-center gap-2">
           <input name="email" type="email" required placeholder="teammate@company.com" className={field} />
           <select name="role" className={field} defaultValue="member">
             <option value="member">Member</option>
             <option value="admin">Admin</option>
           </select>
-          <button type="submit" className="rounded-lg border border-neutral-300 dark:border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-800 dark:text-neutral-200 hover:border-neutral-400 dark:hover:border-neutral-500">Add / invite</button>
-        </form>
+          <SubmitButton pendingLabel="Adding..." className="rounded-lg border border-neutral-300 dark:border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-800 dark:text-neutral-200 hover:border-neutral-400 dark:hover:border-neutral-500">Add / invite</SubmitButton>
+        </ActionForm>
         <p className="mt-2 text-xs text-neutral-500">Existing users are added immediately; new emails are recorded as pending invites (email delivery is a later integration).</p>
       </section>
 

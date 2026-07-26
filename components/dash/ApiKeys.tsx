@@ -1,25 +1,29 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useToast } from "@/components/Toast";
+import SubmitButton from "./SubmitButton";
+import ActionForm from "./ActionForm";
 import { createApiKeyAction, revokeApiKeyAction } from "@/app/(dash)/actions";
 import CopyField from "./CopyField";
 
 type Key = { id: string; name: string; prefix: string; createdAt: string | Date; lastUsedAt: string | Date | null };
 
 export default function ApiKeys({ keys }: { keys: Key[] }) {
-  const [state, action, pending] = useActionState(
-    async (_prev: { plain: string } | null, fd: FormData) => createApiKeyAction(null, fd),
-    null,
-  );
+  const [state, action] = useActionState(createApiKeyAction, null);
+  const { toast } = useToast();
+  useEffect(() => {
+    if (state) toast(state.message, state.ok ? "success" : "error");
+  }, [state, toast]);
   const field = "rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/60 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-emerald-500";
 
   return (
     <div>
       <form action={action} className="flex flex-wrap items-center gap-2">
         <input name="name" placeholder="Key name (e.g. Production)" className={field} />
-        <button type="submit" disabled={pending} className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-400 disabled:opacity-50">
-          {pending ? "Creating..." : "Create key"}
-        </button>
+        <SubmitButton pendingLabel="Creating..." className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-400">
+          Create key
+        </SubmitButton>
       </form>
 
       {state?.plain && (
@@ -37,10 +41,10 @@ export default function ApiKeys({ keys }: { keys: Key[] }) {
               <span className="block truncate text-sm font-medium">{k.name}</span>
               <span className="block font-mono text-xs text-neutral-500">{k.prefix}&hellip; &middot; {k.lastUsedAt ? `used ${new Date(k.lastUsedAt).toLocaleDateString()}` : "never used"}</span>
             </span>
-            <form action={revokeApiKeyAction}>
+            <ActionForm action={revokeApiKeyAction}>
               <input type="hidden" name="keyId" value={k.id} />
-              <button type="submit" className="shrink-0 text-xs text-red-400 hover:text-red-300">Revoke</button>
-            </form>
+              <SubmitButton className="shrink-0 text-xs text-red-400 hover:text-red-300">Revoke</SubmitButton>
+            </ActionForm>
           </li>
         ))}
       </ul>

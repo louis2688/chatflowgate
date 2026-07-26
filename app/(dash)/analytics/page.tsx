@@ -9,6 +9,8 @@ import {
 } from "@/lib/analytics";
 import { listIpBans } from "@/lib/ipbans";
 import { banIpAction, unbanIpAction } from "@/app/(dash)/actions";
+import ActionForm from "@/components/dash/ActionForm";
+import SubmitButton from "@/components/dash/SubmitButton";
 import BarChart from "@/components/dash/BarChart";
 
 export const dynamic = "force-dynamic";
@@ -136,15 +138,15 @@ export default async function AnalyticsPage() {
                       <td className={`${td} text-neutral-500`}>{new Date(s.lastSeenAt).toLocaleString()}</td>
                       <td className={td}>
                         {!s.ip || s.ip === "unknown" ? null : banned ? (
-                          <form action={unbanIpAction}>
+                          <ActionForm action={unbanIpAction}>
                             <input type="hidden" name="banId" value={bans.find((b) => b.ip === s.ip)?.id ?? ""} />
-                            <button type="submit" className="text-xs text-neutral-500 hover:text-neutral-300">Unban</button>
-                          </form>
+                            <SubmitButton className="text-xs text-neutral-500 hover:text-neutral-300">Unban</SubmitButton>
+                          </ActionForm>
                         ) : (
-                          <form action={banIpAction}>
+                          <ActionForm action={banIpAction}>
                             <input type="hidden" name="ip" value={s.ip} />
-                            <button type="submit" className="text-xs text-red-400 hover:text-red-300">Ban IP</button>
-                          </form>
+                            <SubmitButton className="text-xs text-red-400 hover:text-red-300">Ban IP</SubmitButton>
+                          </ActionForm>
                         )}
                       </td>
                     </tr>

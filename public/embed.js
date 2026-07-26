@@ -69,6 +69,18 @@
     btn.setAttribute("aria-expanded", String(open));
   };
 
+  // The widget can ask to be closed from its own header. Only trust messages
+  // coming from the Chatnode origin that serves this script.
+  window.addEventListener("message", function (e) {
+    if (e.origin !== host) return;
+    if (!e.data || e.data.type !== "chatnode:minimize") return;
+    open = false;
+    frame.style.display = "none";
+    btn.innerHTML = chatIcon;
+    btn.setAttribute("aria-label", "Open chat");
+    btn.setAttribute("aria-expanded", "false");
+  });
+
   function mount() { document.body.appendChild(frame); document.body.appendChild(btn); }
   if (document.body) mount();
   else document.addEventListener("DOMContentLoaded", mount);

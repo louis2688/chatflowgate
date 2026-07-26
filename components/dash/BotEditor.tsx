@@ -5,6 +5,8 @@ import Link from "next/link";
 import { createBotAction, updateBotAction, deleteBotAction } from "@/app/(dash)/actions";
 import WebhookAuth from "./WebhookAuth";
 import CopyField from "./CopyField";
+import ActionForm from "./ActionForm";
+import SubmitButton from "./SubmitButton";
 import type { Bot } from "@/lib/bots";
 
 const field =
@@ -152,7 +154,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     <div>
       <Link href="/bots" className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">&larr; Bots</Link>
 
-      <form action={editing ? updateBotAction : createBotAction} className="mt-3">
+      <ActionForm action={editing ? updateBotAction : createBotAction} className="mt-3">
         {editing && <input type="hidden" name="botId" value={bot!.id} />}
 
         <div className="flex items-center justify-between gap-3 rounded-t-xl border border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/40">
@@ -171,7 +173,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
             {editing && (
               <button type="button" onClick={() => setShowEmbed((v) => !v)} className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">Get embed code</button>
             )}
-            <button type="submit" className="rounded-lg bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-400">{editing ? "Save changes" : "Create bot"}</button>
+            <SubmitButton pendingLabel="Saving..." className="rounded-lg bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-400">{editing ? "Save changes" : "Create bot"}</SubmitButton>
           </div>
         </div>
 
@@ -412,16 +414,16 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
             <Preview s={s} open={previewOpen} setOpen={setPreviewOpen} />
           </div>
         </div>
-      </form>
+      </ActionForm>
 
       {editing && (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/10">
           <h2 className="font-semibold text-red-500 dark:text-red-300">Danger zone</h2>
           <p className="mb-3 mt-1 text-sm text-neutral-600 dark:text-neutral-400">Deletes the bot. This cannot be undone.</p>
-          <form action={deleteBotAction}>
+          <ActionForm action={deleteBotAction}>
             <input type="hidden" name="botId" value={bot!.id} />
-            <button type="submit" className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20">Delete bot</button>
-          </form>
+            <SubmitButton pendingLabel="Deleting..." className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20">Delete bot</SubmitButton>
+          </ActionForm>
         </div>
       )}
     </div>

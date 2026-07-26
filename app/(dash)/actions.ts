@@ -87,7 +87,34 @@ function botValues(formData: FormData, p: z.infer<typeof botSchema>) {
   };
 }
 
-export async function createBotAction(formData: FormData) {
+export type ActionResult = { ok: boolean; message: string };
+
+// redirect() and notFound() signal themselves by throwing; those must reach
+// Next rather than being reported to the user as a failure.
+function isControlFlow(e: unknown): boolean {
+  const digest = (e as { digest?: unknown })?.digest;
+  return typeof digest === "string" && (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND");
+}
+
+// Turns an expected failure into a message the UI can toast, instead of an
+// unhandled throw that renders Next's error page.
+async function run(fn: () => Promise<string>): Promise<ActionResult> {
+  try {
+    return { ok: true, message: await fn() };
+  } catch (e) {
+    if (isControlFlow(e)) throw e;
+    if (e instanceof z.ZodError) {
+      const first = e.issues[0];
+      const field = first?.path?.join(".");
+      return { ok: false, message: field ? `${field}: ${first.message}` : "Please check the form and try again." };
+    }
+    console.error("[action]", e);
+    return { ok: false, message: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+export async function createBotAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
   const { orgId } = await requireContext();
   const usage = await orgUsage(orgId);
   if (usage.bots >= usage.plan.maxBots) {
@@ -96,38 +123,58 @@ export async function createBotAction(formData: FormData) {
   const p = botSchema.parse(Object.fromEntries(formData));
   const row = await createBot(orgId, botValues(formData, p));
   redirect(`/bots/${row.id}`);
+  });
 }
 
-export async function updateBotAction(formData: FormData) {
-  const { orgId } = await requireContext();
-  const id = String(formData.get("botId"));
-  const p = botSchema.parse(Object.fromEntries(formData));
-  await updateBot(orgId, id, botValues(formData, p));
-  revalidatePath(`/bots/${id}`);
-  revalidatePath("/bots");
+export async function updateBotAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
+    const { orgId } = await requireContext();
+    const id = String(formData.get("botId"));
+    const p = botSchema.parse(Object.fromEntries(formData));
+    await updateBot(orgId, id, botValues(formData, p));
+    revalidatePath(`/bots/${id}`);
+    revalidatePath("/bots");
+    return "Bot saved.";
+  });
 }
 
-export async function deleteBotAction(formData: FormData) {
-  const { orgId } = await requireContext();
-  await deleteBot(orgId, String(formData.get("botId")));
-  redirect("/bots");
+export async function deleteBotAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
+    const { orgId } = await requireContext();
+    await deleteBot(orgId, String(formData.get("botId")));
+    redirect("/bots");
+    return "Bot deleted.";
+  });
 }
 
-export async function createApiKeyAction(_prev: unknown, formData: FormData) {
-  const { orgId } = await requireContext();
-  const name = String(formData.get("name") || "API key").slice(0, 80);
-  const { plain } = await createApiKey(orgId, name);
-  revalidatePath("/settings");
-  return { plain };
+export async function createApiKeyAction(
+  _prev: (ActionResult & { plain?: string }) | null,
+  formData: FormData,
+): Promise<ActionResult & { plain?: string }> {
+  try {
+    const { orgId } = await requireContext();
+    const name = String(formData.get("name") || "API key").slice(0, 80);
+    const { plain } = await createApiKey(orgId, name);
+    revalidatePath("/settings");
+    return { ok: true, message: `Key "${name}" created. Copy it now.`, plain };
+  } catch (e) {
+    if (isControlFlow(e)) throw e;
+    console.error("[action] createApiKey", e);
+    return { ok: false, message: e instanceof Error ? e.message : "Could not create the key." };
+  }
 }
 
-export async function revokeApiKeyAction(formData: FormData) {
-  const { orgId } = await requireContext();
-  await revokeApiKey(orgId, String(formData.get("keyId")));
-  revalidatePath("/settings");
+export async function revokeApiKeyAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
+    const { orgId } = await requireContext();
+    await revokeApiKey(orgId, String(formData.get("keyId")));
+    revalidatePath("/settings");
+    return "API key revoked.";
+  });
 }
 
-export async function updateOrgAction(formData: FormData) {
+export async function updateOrgAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
   const { orgId, role } = await requireContext();
   if (role !== "owner" && role !== "admin") throw new Error("Not authorized");
   const { plan } = await orgUsage(orgId);
@@ -138,11 +185,14 @@ export async function updateOrgAction(formData: FormData) {
     .set({ brandName: brandName || null, hideBranding: plan.canHideBranding && formData.get("hideBranding") === "on", customDomain: customDomain || null })
     .where(eq(organization.id, orgId));
   revalidatePath("/settings");
+  return "Branding updated.";
+  });
 }
 
 // Add an existing user, or record a pending invite. Owner/admin only; role is
 // restricted to member/admin (no owner grants here); dedupe is scoped to this org.
-export async function inviteMemberAction(formData: FormData) {
+export async function inviteMemberAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
   const ctx = await requireContext();
   if (ctx.role !== "owner" && ctx.role !== "admin") throw new Error("Not authorized");
   const usage = await orgUsage(ctx.orgId);
@@ -171,11 +221,14 @@ export async function inviteMemberAction(formData: FormData) {
     });
   }
   revalidatePath("/settings");
+  return existing ? `${email} added to the workspace.` : `Invite recorded for ${email}.`;
+  });
 }
 
 // ponytail: dev top-up. With STRIPE_SECRET_KEY set, create a Checkout session and
 // redirect here instead, fulfilling via webhook. Not wired without keys.
-export async function purchaseCreditsAction(formData: FormData) {
+export async function purchaseCreditsAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
   const { orgId } = await requireContext();
   // Server-side gate. Hiding the button is not enough: this is a POST endpoint
   // any signed-in user can call directly.
@@ -186,20 +239,29 @@ export async function purchaseCreditsAction(formData: FormData) {
   if (!pkg) throw new Error("Unknown package");
   await addCredits(orgId, pkg.credits, `purchase:${pkg.id}`);
   revalidatePath("/billing");
+  return `${pkg.credits.toLocaleString()} credits added.`;
+  });
 }
 
-export async function banIpAction(formData: FormData) {
-  const { orgId } = await requireContext();
-  const ip = String(formData.get("ip") || "").trim().slice(0, 64);
-  const reason = String(formData.get("reason") || "").slice(0, 200);
-  if (ip) await addIpBan(orgId, ip, reason);
-  revalidatePath("/security");
-  revalidatePath("/analytics");
+export async function banIpAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
+    const { orgId } = await requireContext();
+    const ip = String(formData.get("ip") || "").trim().slice(0, 64);
+    const reason = String(formData.get("reason") || "").slice(0, 200);
+    if (!ip) throw new Error("Enter an IP address to ban.");
+    await addIpBan(orgId, ip, reason);
+    revalidatePath("/security");
+    revalidatePath("/analytics");
+    return `${ip} banned.`;
+  });
 }
 
-export async function unbanIpAction(formData: FormData) {
-  const { orgId } = await requireContext();
-  await removeIpBan(orgId, String(formData.get("banId")));
-  revalidatePath("/security");
-  revalidatePath("/analytics");
+export async function unbanIpAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return run(async () => {
+    const { orgId } = await requireContext();
+    await removeIpBan(orgId, String(formData.get("banId")));
+    revalidatePath("/security");
+    revalidatePath("/analytics");
+    return "IP unbanned.";
+  });
 }

@@ -56,12 +56,14 @@ export default function Chat({
   config,
   variant = "full",
   hideBranding = false,
+  onMinimize,
 }: {
   config: PublicBotConfig;
   // "fill" sizes to its parent, so the live preview can honour the bot's
   // configured width and height instead of a fixed card.
   variant?: "full" | "panel" | "fill";
   hideBranding?: boolean;
+  onMinimize?: () => void;
 }) {
   const [messages, setMessages] = useState<Msg[]>([{ role: "bot", text: config.welcome }]);
   const [input, setInput] = useState("");
@@ -252,9 +254,24 @@ export default function Chat({
             Online
           </p>
         </div>
-        <svg className="ms-auto h-4 w-4 text-neutral-300 dark:text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" strokeLinejoin="round" />
-        </svg>
+        <button
+          type="button"
+          aria-label="Minimize chat"
+          title="Minimize"
+          onClick={() => {
+            if (onMinimize) return onMinimize();
+            // Embedded in the loader's iframe: ask the parent to close the panel.
+            // The payload carries nothing sensitive, and embed.js checks the origin.
+            if (typeof window !== "undefined" && window.parent !== window) {
+              window.parent.postMessage({ type: "chatnode:minimize" }, "*");
+            }
+          }}
+          className="ms-auto grid h-8 w-8 place-items-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
       </header>
 
       {!consented ? (

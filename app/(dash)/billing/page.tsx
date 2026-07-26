@@ -3,6 +3,8 @@ import { PACKAGES, getUsage, recentTxns, type CreditPackage } from "@/lib/credit
 import { PLANS, planOf } from "@/lib/plans";
 import { devTopUpAllowed } from "@/lib/config";
 import { purchaseCreditsAction } from "@/app/(dash)/actions";
+import ActionForm from "@/components/dash/ActionForm";
+import SubmitButton from "@/components/dash/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -106,13 +108,13 @@ export default async function BillingPage() {
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PACKAGES.map((p) =>
             canTopUp ? (
-              <form key={p.id} action={purchaseCreditsAction} className={packClass(p.popular)}>
+              <ActionForm key={p.id} action={purchaseCreditsAction} className={packClass(p.popular)}>
                 <input type="hidden" name="packageId" value={p.id} />
                 <PackageBody p={p} />
-                <button type="submit" className="mt-auto w-full rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-400">
+                <SubmitButton pendingLabel="Adding..." className="mt-auto w-full rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-400">
                   {stripeOn ? "Buy" : "Add (dev)"}
-                </button>
-              </form>
+                </SubmitButton>
+              </ActionForm>
             ) : (
               <div key={p.id} className={packClass(p.popular)}>
                 <PackageBody p={p} />

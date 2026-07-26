@@ -57,7 +57,7 @@ export default function PreviewStage({
       <div className={`flex ${stackDir} ${stackAlign} gap-3`}>
         {open ? (
           <div style={{ width, height, maxWidth: "100%", maxHeight: "70vh" }}>
-            <Chat config={config} variant="fill" hideBranding={hideBranding} />
+            <Chat config={config} variant="fill" hideBranding={hideBranding} onMinimize={() => setOpen(false)} />
           </div>
         ) : (
           greeting && (

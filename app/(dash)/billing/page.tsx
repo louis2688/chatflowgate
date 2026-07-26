@@ -54,8 +54,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           Your last payment failed. Update your card via Manage billing to keep your plan active.
         </div>
       )}
+      {/* green-*, not emerald-*: the theme remaps emerald to M blue, and a
+          success notice has to read as success, not as brand accent. */}
       {checkout === "success" && (
-        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+        <div className="rounded-lg border border-green-600/60 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:border-green-500/50 dark:text-green-400">
           Payment complete. Stripe confirms it via webhook within a few seconds - refresh if the numbers have not moved yet.
         </div>
       )}

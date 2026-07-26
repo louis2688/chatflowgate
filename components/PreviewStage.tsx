@@ -70,8 +70,8 @@ export default function PreviewStage({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? "Close chat" : buttonText || "Open chat"}
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-full text-white shadow-lg transition-transform hover:scale-105"
-          style={{ background: config.color }}
+          className={`flex h-14 shrink-0 items-center justify-center gap-2 rounded-full shadow-lg transition-transform hover:scale-105 ${!open && buttonText ? "px-5" : "w-14"}`}
+          style={{ background: config.color, color: config.brandFg }}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             {open ? (
@@ -83,6 +83,7 @@ export default function PreviewStage({
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             )}
           </svg>
+          {!open && buttonText && <span className="text-sm font-medium">{buttonText}</span>}
         </button>
       </div>
     </div>

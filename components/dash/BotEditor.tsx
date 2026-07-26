@@ -63,7 +63,8 @@ function ChatWindow({ s }: { s: PreviewState }) {
           {s.welcome || "Hi! How can I help you today?"}
         </div>
         {(() => {
-          const prompts = s.suggestedPrompts.split("\\n").map((x) => x.trim()).filter(Boolean);
+          // Split exactly like the server action's lines(): newline or comma.
+          const prompts = s.suggestedPrompts.split(/[\n,]/).map((x) => x.trim()).filter(Boolean);
           if (prompts.length === 0) return null;
           return (
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -115,8 +116,15 @@ function Preview({ s, open, setOpen }: { s: PreviewState; open: boolean; setOpen
             {s.greeting || s.welcome || "Hi! How can I help?"}
           </div>
         )}
-        <button type="button" onClick={() => setOpen(!open)} className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full text-white shadow-lg" style={{ background: s.color }} aria-label={s.buttonText || "Open chat"}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className={`flex h-12 flex-shrink-0 items-center justify-center gap-2 rounded-full text-white shadow-lg ${!open && s.buttonText ? "px-4" : "w-12"}`}
+          style={{ background: s.color }}
+          aria-label={s.buttonText || "Open chat"}
+        >
           {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, 22) : BotGlyph(22)}
+          {!open && s.buttonText && <span className="text-sm font-medium">{s.buttonText}</span>}
         </button>
       </div>
     </div>
@@ -146,7 +154,13 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
   const set = (patch: Partial<typeof s>) => setS((p) => ({ ...p, ...patch }));
 
   const origin = typeof window === "undefined" ? "https://www.chatnode.app" : window.location.origin;
-  const snippet = `<script src="${origin}/embed.js" data-bot="${bot?.id ?? "BOT_ID"}" data-color="${s.color}" data-position="${s.position}" data-width="${s.widgetWidth}" data-height="${s.widgetHeight}" defer></script>`;
+  // HTML-attribute-escape free text so quotes in a greeting can't break the tag.
+  const attr = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  const snippet =
+    `<script src="${origin}/embed.js" data-bot="${bot?.id ?? "BOT_ID"}" data-color="${s.color}" data-position="${s.position}" data-width="${s.widgetWidth}" data-height="${s.widgetHeight}"` +
+    (s.buttonText ? ` data-button-text="${attr(s.buttonText)}"` : "") +
+    (s.greeting ? ` data-greeting="${attr(s.greeting)}"` : "") +
+    ` defer></script>`;
   const tabBtn = (id: "settings" | "appearance", text: string) =>
     <button type="button" onClick={() => setTab(id)} className={`flex-1 rounded-none border-b-2 px-3 py-3 text-sm font-medium ${tab === id ? "border-emerald-500 text-emerald-500" : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}>{text}</button>;
 
@@ -261,7 +275,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                     <textarea
                       name="geoCountries"
                       rows={2}
-                      defaultValue={(bot?.geoCountries ?? []).join("\\n")}
+                      defaultValue={(bot?.geoCountries ?? []).join("\n")}
                       placeholder="PH&#10;US&#10;SG"
                       className={field}
                     />
@@ -271,7 +285,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                     </p>
                   </div>
                 )}
-                {s.geoMode === "off" && <input type="hidden" name="geoCountries" value={(bot?.geoCountries ?? []).join("\\n")} />}
+                {s.geoMode === "off" && <input type="hidden" name="geoCountries" value={(bot?.geoCountries ?? []).join("\n")} />}
               </div>
               <WebhookAuth defaultType={(bot?.webhookAuthType as "none" | "basic" | "header") ?? "none"} defaultName={bot?.webhookAuthHeader ?? ""} defaultValue={bot?.webhookAuthValue ?? ""} />
             </div>
@@ -418,7 +432,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
 
       {editing && (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/10">
-          <h2 className="font-semibold text-red-500 dark:text-red-300">Danger zone</h2>
+          <h2 className="font-semibold text-red-700 dark:text-red-300">Danger zone</h2>
           <p className="mb-3 mt-1 text-sm text-neutral-600 dark:text-neutral-400">Deletes the bot. This cannot be undone.</p>
           <ActionForm action={deleteBotAction}>
             <input type="hidden" name="botId" value={bot!.id} />

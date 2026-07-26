@@ -1,5 +1,6 @@
 /* Chatnode embed loader. Usage:
    <script src="https://host/embed.js" data-bot="BOT_ID" data-color="#1c69d4" defer></script>
+   Optional: data-position, data-width, data-height, data-button-text, data-greeting.
    Mints an origin-validated session in the PARENT context (so the bot's domain
    allowlist is enforced), then hands the token to the widget iframe via #hash. */
 (function () {
@@ -10,6 +11,8 @@
   var botId = script.getAttribute("data-bot");
   if (!botId) { console.error("[Chatnode] missing data-bot attribute"); return; }
   var color = script.getAttribute("data-color") || "#1c69d4";
+  var buttonText = script.getAttribute("data-button-text") || "";
+  var greeting = script.getAttribute("data-greeting") || "";
   // Accepts "left"/"right" (legacy) and the four corners the dashboard emits.
   var pos = (script.getAttribute("data-position") || "bottom-right").toLowerCase();
   var side = pos.indexOf("left") !== -1 ? "left" : "right";
@@ -22,8 +25,19 @@
   var w = px("data-width", 400, 280, 600);
   var h = px("data-height", 640, 320, 900);
 
-  var chatIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-  var closeIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  // Readable text/icon colour for the launcher (YIQ; the widget itself does full WCAG).
+  var m = /^#?([0-9a-f]{6})$/i.exec(color);
+  var fg = "#ffffff";
+  if (m) {
+    var v = parseInt(m[1], 16);
+    if (0.299 * (v >> 16 & 255) + 0.587 * (v >> 8 & 255) + 0.114 * (v & 255) > 150) fg = "#111111";
+  }
+
+  function icon(d) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + fg + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+  }
+  var chatIcon = icon("M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z");
+  var closeIcon = icon("M6 6l12 12M18 6L6 18");
 
   var frame = document.createElement("iframe");
   frame.title = "Chat";
@@ -49,24 +63,52 @@
 
   var btn = document.createElement("button");
   btn.type = "button";
-  btn.setAttribute("aria-label", "Open chat");
-  btn.setAttribute("aria-expanded", "false");
-  btn.innerHTML = chatIcon;
   btn.style.cssText =
-    "position:fixed;" + vert + ":20px;" + side + ":20px;width:56px;height:56px;border:0;" +
-    "border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;" +
+    "position:fixed;" + vert + ":20px;" + side + ":20px;height:56px;border:0;cursor:pointer;" +
+    "display:flex;align-items:center;justify-content:center;gap:8px;" +
     "background:" + color + ";box-shadow:0 8px 24px rgba(0,0,0,.22);z-index:2147483001;transition:transform .15s ease;";
   btn.onmouseenter = function () { btn.style.transform = "scale(1.06)"; };
   btn.onmouseleave = function () { btn.style.transform = "scale(1)"; };
 
+  // Greeting bubble, shown next to the launcher while the chat is closed.
+  var bubble = null;
+  if (greeting) {
+    bubble = document.createElement("div");
+    bubble.style.cssText =
+      "position:fixed;" + vert + ":88px;" + side + ":20px;max-width:240px;" +
+      "background:#fff;color:#111;border:1px solid #e5e5e5;border-radius:12px;" +
+      "padding:10px 12px;font:13px/1.45 system-ui,sans-serif;" +
+      "box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:2147483001;";
+    bubble.textContent = greeting;
+  }
+
   var open = false;
+  function render() {
+    frame.style.display = open ? "block" : "none";
+    if (bubble) bubble.style.display = open ? "none" : "block";
+    if (!open && buttonText) {
+      btn.style.width = "auto";
+      btn.style.padding = "0 18px";
+      btn.style.borderRadius = "28px";
+      btn.innerHTML = chatIcon;
+      var label = document.createElement("span");
+      label.style.cssText = "color:" + fg + ";font:600 14px/1 system-ui,sans-serif;white-space:nowrap;";
+      label.textContent = buttonText;
+      btn.appendChild(label);
+    } else {
+      btn.style.width = "56px";
+      btn.style.padding = "0";
+      btn.style.borderRadius = "50%";
+      btn.innerHTML = open ? closeIcon : chatIcon;
+    }
+    btn.setAttribute("aria-label", open ? "Close chat" : buttonText || "Open chat");
+    btn.setAttribute("aria-expanded", String(open));
+  }
+
   btn.onclick = function () {
     open = !open;
     if (open) loadFrame();
-    frame.style.display = open ? "block" : "none";
-    btn.innerHTML = open ? closeIcon : chatIcon;
-    btn.setAttribute("aria-label", open ? "Close chat" : "Open chat");
-    btn.setAttribute("aria-expanded", String(open));
+    render();
   };
 
   // The widget can ask to be closed from its own header. Only trust messages
@@ -75,13 +117,15 @@
     if (e.origin !== host) return;
     if (!e.data || e.data.type !== "chatnode:minimize") return;
     open = false;
-    frame.style.display = "none";
-    btn.innerHTML = chatIcon;
-    btn.setAttribute("aria-label", "Open chat");
-    btn.setAttribute("aria-expanded", "false");
+    render();
   });
 
-  function mount() { document.body.appendChild(frame); document.body.appendChild(btn); }
+  function mount() {
+    document.body.appendChild(frame);
+    if (bubble) document.body.appendChild(bubble);
+    document.body.appendChild(btn);
+    render();
+  }
   if (document.body) mount();
   else document.addEventListener("DOMContentLoaded", mount);
 })();

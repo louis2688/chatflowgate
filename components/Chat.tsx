@@ -58,7 +58,9 @@ export default function Chat({
   hideBranding = false,
 }: {
   config: PublicBotConfig;
-  variant?: "full" | "panel";
+  // "fill" sizes to its parent, so the live preview can honour the bot's
+  // configured width and height instead of a fixed card.
+  variant?: "full" | "panel" | "fill";
   hideBranding?: boolean;
 }) {
   const [messages, setMessages] = useState<Msg[]>([{ role: "bot", text: config.welcome }]);
@@ -228,7 +230,9 @@ export default function Chat({
   const shell =
     variant === "panel"
       ? "flex h-[560px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-2xl dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100"
-      : "flex h-dvh flex-col bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
+      : variant === "fill"
+        ? "flex h-full w-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-2xl dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100"
+        : "flex h-dvh flex-col bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 
   return (
     <div className={shell} dir={config.rtl ? "rtl" : "ltr"} style={{ "--brand": config.color, "--brand-fg": config.brandFg } as React.CSSProperties}>

@@ -159,6 +159,16 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
           <h1 className="font-display truncate text-lg font-semibold">{s.name || "Untitled bot"}</h1>
           <div className="flex items-center gap-2">
             {editing && (
+              <a
+                href={`/preview/${bot!.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              >
+                Live preview
+              </a>
+            )}
+            {editing && (
               <button type="button" onClick={() => setShowEmbed((v) => !v)} className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">Get embed code</button>
             )}
             <button type="submit" className="rounded-lg bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-400">{editing ? "Save changes" : "Create bot"}</button>

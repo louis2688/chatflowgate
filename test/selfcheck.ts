@@ -158,17 +158,21 @@ assert.equal(planOf("pro").maxMembers, 3);
 assert.equal(planOf("max").maxBots, 30);
 assert.equal(planOf("max").maxMembers, 6);
 assert.equal(PLANS.free.canHideBranding, false, "free cannot hide branding");
-assert.ok(PLANS.pro.canHideBranding && PLANS.max.canHideBranding, "paid tiers can hide branding");
+assert.ok(PLANS.lite.canHideBranding && PLANS.pro.canHideBranding && PLANS.max.canHideBranding, "paid tiers can hide branding");
 
 // --- message allowances ---
 assert.equal(PLANS.free.monthlyMessages, 500);
+assert.equal(PLANS.lite.monthlyMessages, 5_000);
+assert.equal(PLANS.lite.price, 19);
+assert.equal(PLANS.pro.price, 29);
+assert.equal(PLANS.max.price, 99);
 assert.equal(PLANS.pro.monthlyMessages, 10_000);
 assert.equal(PLANS.max.monthlyMessages, 50_000);
 
 // Dominance rule: a plan must include at least as many messages as its own price
 // would buy as a top-up pack. If this ever fails, buying packs beats subscribing
 // and the two systems start competing with each other.
-for (const plan of [PLANS.pro, PLANS.max]) {
+for (const plan of [PLANS.lite, PLANS.pro, PLANS.max]) {
   const affordable = PACKAGES.filter((p) => p.price <= plan.price).map((p) => p.credits);
   const best = affordable.length ? Math.max(...affordable) : 0;
   assert.ok(

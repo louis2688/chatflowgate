@@ -75,7 +75,7 @@ export default async function BillingPage() {
 
       <div className={card}>
         <h2 className="text-lg font-semibold">Plans</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {Object.values(PLANS).map((pl) => (
             <div key={pl.id} className={`rounded-xl border p-4 ${pl.id === plan.id ? "border-emerald-500/60 bg-emerald-500/10" : "border-neutral-200 dark:border-neutral-800"}`}>
               <div className="flex items-center justify-between">

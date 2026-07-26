@@ -27,7 +27,12 @@ export const PLANS: Record<PlanId, Plan> = {
 // Unknown/legacy values fall back to the most restrictive plan rather than the
 // most permissive one, so a bad column value can never unlock paid features.
 export function planOf(id: string | null | undefined): Plan {
-  return PLANS[(id ?? "free") as PlanId] ?? PLANS.free;
+  const key = id ?? "free";
+  // hasOwn, not a truthiness check: PLANS["constructor"] and PLANS["__proto__"]
+  // are truthy inherited members, so `?? PLANS.free` would never fire and the
+  // caller would get a Plan whose limits are all undefined -- which compares
+  // false against every >= check and removes the caps entirely.
+  return Object.hasOwn(PLANS, key) ? PLANS[key as PlanId] : PLANS.free;
 }
 
 export type CreditPackage = { id: string; label: string; credits: number; price: number; popular?: boolean };
@@ -37,7 +42,7 @@ export type CreditPackage = { id: string; label: string; credits: number; price:
 // selfcheck): every tier includes at least what its own price buys as credits.
 export const PACKAGES: CreditPackage[] = [
   { id: "starter", label: "Starter", credits: 5000, price: 19 },
-  { id: "growth", label: "Growth", credits: 10000, price: 39 },
+  { id: "growth", label: "Growth", credits: 10000, price: 25 },
   { id: "professional", label: "Professional", credits: 25000, price: 70, popular: true },
   { id: "ultimate", label: "Ultimate", credits: 100000, price: 199 },
 ];

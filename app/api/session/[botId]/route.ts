@@ -8,6 +8,8 @@ import { assertPublicHost, safeFetch } from "@/lib/ssrf";
 import { webhookAuthHeaders } from "@/lib/webhook-auth";
 import { geoAllowed } from "@/lib/geo";
 import { recordLeadSession } from "@/lib/store";
+import { auth } from "@/lib/auth";
+import { isOrgMember } from "@/lib/bots";
 
 export const runtime = "nodejs";
 
@@ -90,8 +92,16 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const token = issueSession(bot.id);
   const sid = verifySession(token)?.sid ?? crypto.randomUUID();
-  // Persist the lead on the session (our analytics) and forward it to n8n.
-  await recordLeadSession(bot.id, sid, { ip: clientIp(req), ua: req.headers.get("user-agent"), ...clientGeo(req) }, lead).catch(() => {});
-  await forwardLead(bot, sid, lead);
+
+  // A signed-in member of the owning org is testing via the live preview, not a
+  // real visitor. Issue the token so the chat works, but do not record a fake
+  // lead in analytics and do not fire chat_started at the customer's production
+  // n8n workflow, which could create a bogus CRM record or notify their sales team.
+  const authed = await auth.api.getSession({ headers: req.headers }).catch(() => null);
+  const previewing = authed ? await isOrgMember(authed.user.id, bot.organizationId) : false;
+  if (!previewing) {
+    await recordLeadSession(bot.id, sid, { ip: clientIp(req), ua: req.headers.get("user-agent"), ...clientGeo(req) }, lead).catch(() => {});
+    await forwardLead(bot, sid, lead);
+  }
   return NextResponse.json({ token }, { headers: cors });
 }

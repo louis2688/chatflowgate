@@ -48,7 +48,8 @@ export default async function PreviewPage({ params }: { params: Promise<{ botId:
           </div>
 
           <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
-            Messages sent here are real: they reach your n8n webhook and use your monthly message allowance.
+            Messages are real: they reach your n8n webhook and use your monthly message allowance. Testing here is kept out of
+            your visitor analytics, and a lead form filled in on this page is not forwarded to your workflow.
           </div>
 
           <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-xs dark:border-neutral-800 dark:bg-neutral-900/40">

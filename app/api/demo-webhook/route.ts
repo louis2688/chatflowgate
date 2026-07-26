@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PLANS } from "@/lib/plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,12 +10,30 @@ export const dynamic = "force-dynamic";
 // -- session token, origin check, rate limit, credit, SSRF guard -- instead of
 // bypassing it. Not an LLM: canned answers, matched on keywords.
 
+// Built from lib/plans.ts rather than written out, because this string is the
+// only public pricing statement in the product (the landing page demo bot) and
+// it silently went stale the last time prices moved.
+function pricingLine(): string {
+  const all = Object.values(PLANS);
+  const free = PLANS.free;
+  const paid = all.filter((p) => p.price > 0);
+  const seats = (n: number) => `${n} seat${n === 1 ? "" : "s"}`;
+  const bots = (n: number) => `${n} bot${n === 1 ? "" : "s"}`;
+  const parts = paid.map(
+    (p) => `${p.label} is $${p.price}/month for ${seats(p.maxMembers)}, ${bots(p.maxBots)} and ${p.monthlyMessages.toLocaleString()} messages`,
+  );
+  return (
+    `Chatnode has ${all.length} plans. Free gives you ${bots(free.maxBots)} and ${free.monthlyMessages.toLocaleString()} messages a month. ` +
+    `${parts.join(". ")}. Every paid plan removes the Chatnode badge, and top-up credits never expire.`
+  );
+}
+
 type Reply = { match: RegExp; text: string };
 
 const REPLIES: Reply[] = [
   {
     match: /pric|cost|plan|how much|subscri/i,
-    text: "Chatnode has three plans. Free gives you 1 bot and 1 seat. Pro is $39/month for 3 seats and 10 bots, and removes the Chatnode badge from your widget. Max is $99/month for 6 seats and 30 bots. Every plan includes a monthly message allowance, and unused credits never expire.",
+    text: pricingLine(),
   },
   {
     match: /secur|safe|protect|ssrf|rate.?limit|abuse|ban/i,

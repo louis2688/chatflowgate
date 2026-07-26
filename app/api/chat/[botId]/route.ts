@@ -154,7 +154,10 @@ export async function POST(req: NextRequest, { params }: Params) {
       }
       if (!full) push(FALLBACK);
       // Record session metadata only (ip, geo, parsed UA). Never store message text.
-      await recordSession(bot.id, sid, { ip, ua, ...geo }).catch(() => {});
+      // Skipped when the caller is a signed-in member of the owning org: that is
+      // the live-preview path, and logging it would put the operator's own IP
+      // and a never-rotating session into their visitor analytics.
+      if (!userId) await recordSession(bot.id, sid, { ip, ua, ...geo }).catch(() => {});
       controller.close();
     },
   });

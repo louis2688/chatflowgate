@@ -150,7 +150,7 @@ assert.equal(readableText("garbage"), "#ffffff", "invalid colour defaults to whi
 
 // --- plan limits ---
 // Must fail CLOSED: an unknown or tampered plan value can never unlock a paid tier.
-for (const bad of [null, undefined, "", "enterprise", "MAX", "pro "]) {
+for (const bad of [null, undefined, "", "enterprise", "MAX", "pro ", "constructor", "__proto__", "toString", "hasOwnProperty"]) {
   assert.equal(planOf(bad as string | null).id, "free", "unknown plan falls back to free");
 }
 assert.equal(planOf("pro").maxBots, 10);
@@ -196,5 +196,19 @@ assert.equal(geoAllowed(blockRU, "PH"), true, "blocklist admits everyone else");
 assert.equal(geoAllowed(blockRU, null), true, "blocklist admits an unknown country");
 assert.equal(geoAllowed({ geoMode: "allow", geoCountries: [] }, "PH"), true, "empty list is not a fence");
 assert.equal(geoAllowed({ geoMode: "garbage", geoCountries: ["RU"] }, "RU"), true, "unknown mode does not fence");
+
+// Reverse of the dominance rule: a top-up pack must never cost MORE than a
+// plan that already includes at least as many messages, or the billing page
+// shows two prices for the same thing with the dearer one being worse.
+for (const pack of PACKAGES) {
+  for (const plan of Object.values(PLANS)) {
+    if (plan.monthlyMessages >= pack.credits && plan.price > 0) {
+      assert.ok(
+        plan.price >= pack.price,
+        `${plan.label} ($${plan.price}) includes ${plan.monthlyMessages} yet the ${pack.label} pack charges $${pack.price} for ${pack.credits}`,
+      );
+    }
+  }
+}
 
 console.log("selfcheck: all assertions passed");

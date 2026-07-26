@@ -25,7 +25,7 @@ export default async function Home() {
       <div aria-hidden className="pointer-events-none absolute top-1/3 -right-40 h-[420px] w-[520px] rounded-full bg-[#0653b6]/20 blur-[130px]" />
 
       <nav className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Logo onDark priority className="h-16 w-auto" />
+        <Logo onDark priority className="h-11 w-auto" />
         <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-[1.5px]">
           <Link href="/login" className="text-neutral-300 transition-colors hover:text-white">Log in</Link>
           <Link href="/signup" className={cta.replace("px-6 py-3", "px-5 py-2.5")}>Start free</Link>

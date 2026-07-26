@@ -17,7 +17,7 @@ export default function MarketingShell({
       <div aria-hidden className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-[#1c69d4]/20 blur-[130px]" />
 
       <nav className="relative mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
-        <Link href="/"><Logo onDark className="h-14 w-auto" /></Link>
+        <Link href="/"><Logo onDark className="h-10 w-auto" /></Link>
         <Link href="/login" className="text-xs font-bold uppercase tracking-[1.5px] text-neutral-300 transition-colors hover:text-white">Log in</Link>
       </nav>
 

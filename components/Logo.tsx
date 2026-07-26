@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-const W = 852;
-const H = 693;
+const W = 1028;
+const H = 267;
 
 /**
  * The wordmark is two-tone: "Chat" is brand blue, "Layer" is dark charcoal. The

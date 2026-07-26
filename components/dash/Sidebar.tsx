@@ -56,7 +56,7 @@ export default function Sidebar({ orgName, userEmail }: { orgName: string; userE
           {collapsed ? (
             <Image src="/icon.png" alt="Chatnode" width={30} height={30} priority className="h-[30px] w-[30px]" />
           ) : (
-            <Logo className="h-auto w-[112px]" priority />
+            <Logo className="h-auto w-[150px]" priority />
           )}
         </Link>
         <button

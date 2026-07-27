@@ -13,6 +13,34 @@ function renderMarkdown(text: string): string {
   return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 }
 
+// Spam trap. Bots fill in every field they can find, so a value here means the
+// submission was automated. Do NOT remove these, and do NOT switch them to
+// `display:none` or `hidden`: crawlers skip those, and a screen reader would
+// still announce a hidden-by-attribute input. The clip/1px approach keeps the
+// field in the DOM and reachable to a bot, while aria-hidden + tabIndex -1 keep
+// it away from real users and assistive tech.
+const trapWrap: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
+function Honeypot({ name, inputRef }: { name: string; inputRef: React.RefObject<HTMLInputElement | null> }) {
+  return (
+    <div style={trapWrap} aria-hidden="true">
+      <label htmlFor={`cn-${name}`}>Leave this field empty</label>
+      <input ref={inputRef} id={`cn-${name}`} type="text" name={name} defaultValue="" tabIndex={-1} autoComplete="off" />
+    </div>
+  );
+}
+
 let memoryToken: string | null = null;
 function tokenKey(botId: string) {
   return `chatnode.token.${botId}`;
@@ -73,6 +101,9 @@ export default function Chat({
   const [pendingFile, setPendingFile] = useState<{ name: string; type: string; dataUrl: string } | null>(null);
   const fileRef = useRef<{ name: string; type: string; dataUrl: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Spam traps: one per form. Never read into state, never sent anywhere.
+  const leadTrapRef = useRef<HTMLInputElement>(null);
+  const chatTrapRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const asked = messages.some((m) => m.role === "user");
@@ -133,8 +164,17 @@ export default function Chat({
     if (leadBusy) return;
     setLeadBusy(true);
     setLeadError(null);
+    // Spam trap tripped: pretend it worked and drop it. Nothing is sent, and the
+    // value is never read, stored, or logged.
+    if (leadTrapRef.current?.value) {
+      if (leadTrapRef.current) leadTrapRef.current.value = "";
+      setLeadBusy(false);
+      setLeadDone(true);
+      return;
+    }
     const fd = new FormData(e.currentTarget);
     const payload: Record<string, string> = {};
+    fd.delete("website"); // trap value must never reach the server
     for (const k of ["name", "email", "phone", "message"] as const) {
       const v = String(fd.get(k) ?? "").trim();
       if (v) payload[k] = v;
@@ -163,6 +203,14 @@ export default function Chat({
   async function send(raw: string) {
     const text = raw.trim();
     if ((!text && !pendingFile) || busy) return;
+    // Spam trap tripped: clear the composer as if the message went out, but
+    // never call the gateway.
+    if (chatTrapRef.current?.value) {
+      chatTrapRef.current.value = "";
+      setInput("");
+      setPendingFile(null);
+      return;
+    }
     fileRef.current = pendingFile;
     lastSent.current = text || `Sent a file: ${pendingFile?.name ?? "file"}`;
     const label = pendingFile ? `${text}${text ? "\n" : ""}📎 ${pendingFile.name}` : text;
@@ -297,8 +345,10 @@ export default function Chat({
       ) : !leadDone ? (
         <form onSubmit={submitLead} className="chat-scroll flex flex-1 flex-col gap-3 overflow-y-auto p-5">
           <div>
-            <p className="text-sm font-semibold">Let&apos;s get started</p>
-            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">A few details so we can help you properly.</p>
+            <p className="text-sm font-semibold">{config.leadTitle || "Let's get started"}</p>
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              {config.leadSubtitle || "A few details so we can help you properly."}
+            </p>
           </div>
           {config.leadName && (
             <input name="name" required autoComplete="name" placeholder="Name" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500" />
@@ -312,6 +362,7 @@ export default function Chat({
           {config.leadMessage && (
             <textarea name="message" required rows={3} placeholder="How can we help?" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500 resize-none" />
           )}
+          <Honeypot name="website" inputRef={leadTrapRef} />
           {leadError && <p className="text-xs text-red-500">{leadError}</p>}
           <button type="submit" disabled={leadBusy} className="mt-auto rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-[var(--brand-fg)] disabled:opacity-60">
             {leadBusy ? "Starting..." : "Start chat"}
@@ -363,6 +414,7 @@ export default function Chat({
             </div>
           )}
           <form className="flex items-end gap-2 border-t border-neutral-100 p-3 dark:border-neutral-800/60" onSubmit={(e) => { e.preventDefault(); send(input); }}>
+            <Honeypot name="company" inputRef={chatTrapRef} />
             {config.allowFileUpload && (
               <>
                 <input

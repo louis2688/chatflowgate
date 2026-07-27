@@ -16,6 +16,10 @@ import { auth } from "@/lib/auth";
 export const runtime = "nodejs";
 
 const MAX_INPUT_CHARS = 4000;
+// Spam trap fields mirrored from the widget composer. Invisible to real users,
+// so any value means an automated post. Never parsed, stored, logged, or sent
+// upstream -- only tested for emptiness. Do not remove.
+const TRAP_FIELDS = ["website", "company", "url", "phone_number"] as const;
 const FALLBACK = "Sorry, I couldn't generate a response. Please try again.";
 type Params = { params: Promise<{ botId: string }> };
 
@@ -80,6 +84,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   const body = await safeBody(req);
+  // Silent success: reply like a normal (empty) turn without calling n8n,
+  // spending a credit, or recording a session, so the bot cannot tell it was
+  // caught. Checked server-side because the widget check is skippable.
+  if (body && TRAP_FIELDS.some((f) => typeof body[f] === "string" && (body[f] as string).trim() !== "")) {
+    return new Response(FALLBACK, { headers: { ...cors, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
+  }
   const message = body?.message;
   if (typeof message !== "string" || !message.trim() || message.length > MAX_INPUT_CHARS) {
     return bad("bad_request", 400);

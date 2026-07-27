@@ -15,6 +15,19 @@ export const runtime = "nodejs";
 
 type Params = { params: Promise<{ botId: string }> };
 
+// Spam trap, mirrored from the widget. A real visitor cannot see or tab to
+// these fields, so any value means a bot filled the form in. Checked here as
+// well as in the browser because the client check is trivially skipped by
+// posting straight to this route. The value is only ever tested for emptiness:
+// it is never parsed, stored, logged, or forwarded to n8n.
+const TRAP_FIELDS = ["website", "company", "url", "phone_number"] as const;
+
+function trapTripped(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false;
+  const b = body as Record<string, unknown>;
+  return TRAP_FIELDS.some((f) => typeof b[f] === "string" && (b[f] as string).trim() !== "");
+}
+
 const leadSchema = z.object({
   name: z.string().trim().max(120).optional(),
   email: z.string().trim().email().max(200).optional(),
@@ -79,7 +92,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (bot.allowAnonymous) return NextResponse.json({ token: issueSession(bot.id) }, { headers: cors });
 
-  const parsed = leadSchema.safeParse(await req.json().catch(() => null));
+  const body = await req.json().catch(() => null);
+  // Silent success: the bot gets a token-shaped 200 and learns nothing, but no
+  // lead is recorded and the workflow is never told a visitor arrived.
+  if (trapTripped(body)) return NextResponse.json({ token: issueSession(bot.id) }, { headers: cors });
+  const parsed = leadSchema.safeParse(body);
   if (!parsed.success) return bad("invalid_lead", 400);
   const lead = parsed.data;
 

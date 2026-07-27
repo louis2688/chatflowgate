@@ -14,6 +14,8 @@ export type PublicBotConfig = {
   logoUrl: string | null;
   suggestedPrompts: string[];
   allowAnonymous: boolean;
+  leadTitle: string | null;
+  leadSubtitle: string | null;
   leadName: boolean;
   leadEmail: boolean;
   leadPhone: boolean;
@@ -68,6 +70,8 @@ export function publicConfig(b: Bot): PublicBotConfig {
     logoUrl: b.logoUrl,
     suggestedPrompts: b.suggestedPrompts ?? [],
     allowAnonymous: b.allowAnonymous,
+    leadTitle: b.leadTitle,
+    leadSubtitle: b.leadSubtitle,
     leadName: b.leadName,
     leadEmail: b.leadEmail,
     leadPhone: b.leadPhone,

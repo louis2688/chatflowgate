@@ -142,6 +142,10 @@ export const bot = pgTable("bot", {
   // (false): the visitor must submit the enabled contact fields before a session
   // token is issued, and those details are forwarded to n8n as chat_started.
   allowAnonymous: boolean("allowAnonymous").notNull().default(true),
+  // Heading and sub-heading above the lead form. Null falls back to the
+  // wording the widget shipped with.
+  leadTitle: text("leadTitle"),
+  leadSubtitle: text("leadSubtitle"),
   leadName: boolean("leadName").notNull().default(true),
   leadEmail: boolean("leadEmail").notNull().default(true),
   leadPhone: boolean("leadPhone").notNull().default(false),

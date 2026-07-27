@@ -256,6 +256,16 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
               <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
                 <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Lead capture {s.allowAnonymous && <span className="font-normal text-neutral-400">(used when anonymous is off)</span>}</p>
                 <p className="mt-1 text-xs text-neutral-500">Name and email are always collected. The details reach your workflow as a <code>chat_started</code> event.</p>
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label className={label} htmlFor="leadTitle">Form title</label>
+                    <input id="leadTitle" name="leadTitle" maxLength={80} defaultValue={bot?.leadTitle ?? ""} placeholder="Let's get started" className={field} />
+                  </div>
+                  <div>
+                    <label className={label} htmlFor="leadSubtitle">Form subtitle</label>
+                    <input id="leadSubtitle" name="leadSubtitle" maxLength={200} defaultValue={bot?.leadSubtitle ?? ""} placeholder="A few details so we can help you properly." className={field} />
+                  </div>
+                </div>
                 <div className="mt-2 flex flex-wrap gap-4">
                   <span className="flex items-center gap-2 text-sm text-neutral-400"><input type="checkbox" checked disabled className="h-4 w-4 rounded" /> Name</span>
                   <span className="flex items-center gap-2 text-sm text-neutral-400"><input type="checkbox" checked disabled className="h-4 w-4 rounded" /> Email</span>

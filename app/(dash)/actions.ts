@@ -44,6 +44,8 @@ const botSchema = z.object({
   widgetType: z.enum(["popup", "inline"]).catch("popup"),
   position: z.enum(["bottom-right", "bottom-left", "top-right", "top-left"]).catch("bottom-right"),
   buttonText: z.string().max(40).optional(),
+  leadTitle: z.string().max(80).optional(),
+  leadSubtitle: z.string().max(200).optional(),
   greeting: z.string().max(500).optional(),
 });
 
@@ -59,6 +61,8 @@ function botValues(formData: FormData, p: z.infer<typeof botSchema>) {
     webhookAuthHeader: p.webhookAuthType === "none" ? null : p.webhookAuthHeader || null,
     webhookAuthValue: p.webhookAuthType === "none" ? null : p.webhookAuthValue || null,
     allowAnonymous: formData.get("allowAnonymous") === "on",
+    leadTitle: p.leadTitle?.trim() || null,
+    leadSubtitle: p.leadSubtitle?.trim() || null,
     leadName: true, // Dave: name + email always collected in lead mode
     leadEmail: true,
     leadPhone: formData.get("leadPhone") === "on",

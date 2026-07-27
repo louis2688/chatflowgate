@@ -8,6 +8,7 @@ import CopyField from "./CopyField";
 import ActionForm from "./ActionForm";
 import SubmitButton from "./SubmitButton";
 import type { Bot } from "@/lib/bots";
+import { readableText } from "@/lib/contrast";
 
 const field =
   "w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/60 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-emerald-500";
@@ -42,24 +43,35 @@ type PreviewState = {
   widgetHeight: number;
 };
 
-function Avatar({ logoUrl, color }: { logoUrl: string; color: string }) {
+function Avatar({ logoUrl, color, fg, name }: { logoUrl: string; color: string; fg: string; name: string }) {
   return (
-    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full text-white" style={{ background: "rgba(255,255,255,0.25)" }}>
-      {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-cover" /> : BotGlyph(18)}
+    <div className="grid h-9 w-9 flex-shrink-0 place-items-center overflow-hidden rounded-full text-sm font-semibold" style={{ background: color, color: fg }}>
+      {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-cover" /> : (name.charAt(0).toUpperCase() || BotGlyph(18))}
     </div>
   );
 }
 
+// Deliberately mirrors components/Chat.tsx so the editor shows a smaller copy
+// of the real widget rather than a lookalike. Still a mock, not the live
+// component: it has to redraw on every keystroke and works for an unsaved bot
+// that has no id, no session, and no gateway to talk to.
 function ChatWindow({ s }: { s: PreviewState }) {
+  const fg = readableText(s.color);
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-lg dark:bg-neutral-900">
-      <div className="flex items-center gap-2.5 p-3.5 text-white" style={{ background: s.color }}>
-        <Avatar logoUrl={s.logoUrl} color={s.color} />
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{s.name || "Bot"}</span>
-        <button type="button" className="opacity-85" tabIndex={-1}><Minus /></button>
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
+      <div className="flex items-center gap-3 border-b border-neutral-100 px-4 py-3 dark:border-neutral-800/60">
+        <Avatar logoUrl={s.logoUrl} color={s.color} fg={fg} name={s.name} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{s.name || "Bot"}</p>
+          <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+            Online
+          </p>
+        </div>
+        <button type="button" className="ms-auto text-neutral-400" tabIndex={-1}><Minus /></button>
       </div>
-      <div className="flex-1 overflow-y-auto bg-neutral-50 p-4 dark:bg-neutral-800/40">
-        <div className="max-w-[85%] rounded-xl border border-neutral-200 bg-white px-3 py-2 text-[13px] text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="w-fit max-w-[85%] rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-2 text-sm dark:bg-neutral-800/80">
           {s.welcome || "Hi! How can I help you today?"}
         </div>
         {(() => {
@@ -67,13 +79,9 @@ function ChatWindow({ s }: { s: PreviewState }) {
           const prompts = s.suggestedPrompts.split(/[\n,]/).map((x) => x.trim()).filter(Boolean);
           if (prompts.length === 0) return null;
           return (
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-3 flex flex-wrap gap-2">
               {prompts.map((q, i) => (
-                <span
-                  key={i}
-                  className="rounded-full border px-2.5 py-1 text-[11px]"
-                  style={{ borderColor: s.color, color: s.color }}
-                >
+                <span key={i} className="rounded-full border border-neutral-200 px-3 py-1.5 text-xs text-neutral-600 dark:border-neutral-700 dark:text-neutral-300">
                   {q}
                 </span>
               ))}
@@ -81,9 +89,9 @@ function ChatWindow({ s }: { s: PreviewState }) {
           );
         })()}
       </div>
-      <div className="flex items-center gap-2 border-t border-neutral-200 bg-white p-2.5 dark:border-neutral-700 dark:bg-neutral-900">
-        <div className="flex-1 rounded-full border border-neutral-200 px-3 py-2 text-[13px] text-neutral-400 dark:border-neutral-700">Type a message...</div>
-        <div className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full text-white" style={{ background: s.color }}><Send /></div>
+      <div className="flex items-end gap-2 border-t border-neutral-100 p-3 dark:border-neutral-800/60">
+        <div className="min-h-10 flex-1 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">Type a message</div>
+        <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl" style={{ background: s.color, color: fg }}><Send /></div>
       </div>
     </div>
   );
@@ -107,7 +115,7 @@ function Preview({ s, open, setOpen }: { s: PreviewState; open: boolean; setOpen
         {open ? (
           <div
             className="max-h-full max-w-full overflow-hidden rounded-xl shadow-xl"
-            style={{ width: s.widgetWidth * 0.65, height: s.widgetHeight * 0.5 }}
+            style={{ width: s.widgetWidth * 0.6, height: s.widgetHeight * 0.6 }}
           >
             <ChatWindow s={s} />
           </div>

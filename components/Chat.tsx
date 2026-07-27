@@ -32,11 +32,25 @@ const trapWrap: React.CSSProperties = {
   border: 0,
 };
 
-function Honeypot({ name, inputRef }: { name: string; inputRef: React.RefObject<HTMLInputElement | null> }) {
+function Honeypot({
+  name,
+  inputRef,
+  checkRef,
+}: {
+  name: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  checkRef: React.RefObject<HTMLInputElement | null>;
+}) {
   return (
     <div style={trapWrap} aria-hidden="true">
       <label htmlFor={`cn-${name}`}>Leave this field empty</label>
       <input ref={inputRef} id={`cn-${name}`} type="text" name={name} defaultValue="" tabIndex={-1} autoComplete="off" />
+      {/* Dave's trap, and it catches a different animal than the text field
+          above: a bot hunting for the usual "prove you are human" box ticks
+          this to look legitimate, which is precisely what exposes it. A real
+          visitor never sees it, so it can only ever be ticked by a machine. */}
+      <label htmlFor={`cn-${name}-human`}>I am not a bot</label>
+      <input ref={checkRef} id={`cn-${name}-human`} type="checkbox" name="not_a_bot" tabIndex={-1} />
     </div>
   );
 }
@@ -103,7 +117,9 @@ export default function Chat({
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Spam traps: one per form. Never read into state, never sent anywhere.
   const leadTrapRef = useRef<HTMLInputElement>(null);
+  const leadBotRef = useRef<HTMLInputElement>(null);
   const chatTrapRef = useRef<HTMLInputElement>(null);
+  const chatBotRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const asked = messages.some((m) => m.role === "user");
@@ -166,15 +182,18 @@ export default function Chat({
     setLeadError(null);
     // Spam trap tripped: pretend it worked and drop it. Nothing is sent, and the
     // value is never read, stored, or logged.
-    if (leadTrapRef.current?.value) {
+    if (leadTrapRef.current?.value || leadBotRef.current?.checked) {
       if (leadTrapRef.current) leadTrapRef.current.value = "";
+      if (leadBotRef.current) leadBotRef.current.checked = false;
       setLeadBusy(false);
       setLeadDone(true);
       return;
     }
     const fd = new FormData(e.currentTarget);
     const payload: Record<string, string> = {};
-    fd.delete("website"); // trap value must never reach the server
+    // trap values must never reach the server
+    fd.delete("website");
+    fd.delete("not_a_bot");
     for (const k of ["name", "email", "phone", "message"] as const) {
       const v = String(fd.get(k) ?? "").trim();
       if (v) payload[k] = v;
@@ -205,8 +224,9 @@ export default function Chat({
     if ((!text && !pendingFile) || busy) return;
     // Spam trap tripped: clear the composer as if the message went out, but
     // never call the gateway.
-    if (chatTrapRef.current?.value) {
-      chatTrapRef.current.value = "";
+    if (chatTrapRef.current?.value || chatBotRef.current?.checked) {
+      chatTrapRef.current!.value = "";
+      if (chatBotRef.current) chatBotRef.current.checked = false;
       setInput("");
       setPendingFile(null);
       return;
@@ -362,7 +382,7 @@ export default function Chat({
           {config.leadMessage && (
             <textarea name="message" required rows={3} placeholder="How can we help?" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500 resize-none" />
           )}
-          <Honeypot name="website" inputRef={leadTrapRef} />
+          <Honeypot name="website" inputRef={leadTrapRef} checkRef={leadBotRef} />
           {leadError && <p className="text-xs text-red-500">{leadError}</p>}
           <button type="submit" disabled={leadBusy} className="mt-auto rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-[var(--brand-fg)] disabled:opacity-60">
             {leadBusy ? "Starting..." : "Start chat"}
@@ -414,7 +434,7 @@ export default function Chat({
             </div>
           )}
           <form className="flex items-end gap-2 border-t border-neutral-100 p-3 dark:border-neutral-800/60" onSubmit={(e) => { e.preventDefault(); send(input); }}>
-            <Honeypot name="company" inputRef={chatTrapRef} />
+            <Honeypot name="company" inputRef={chatTrapRef} checkRef={chatBotRef} />
             {config.allowFileUpload && (
               <>
                 <input

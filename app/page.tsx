@@ -165,17 +165,19 @@ export default async function Home() {
       <div aria-hidden className="pointer-events-none absolute top-1/3 -right-40 h-[420px] w-[520px] rounded-full bg-[#0653b6]/20 blur-[130px]" />
 
       <nav className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Logo onDark priority className="h-11 w-auto" />
-        <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-[1.5px]">
+        <Logo onDark priority className="h-8 w-auto shrink-0 sm:h-11" />
+        <div className="flex shrink-0 items-center gap-3 text-xs font-bold uppercase tracking-[1.5px] sm:gap-6">
           <Link href="#pricing" className="hidden text-neutral-300 transition-colors hover:text-white sm:inline">Pricing</Link>
-          <Link href="/login" className="text-neutral-300 transition-colors hover:text-white">Log in</Link>
-          <Link href="/signup" className={cta.replace("px-6 py-3", "px-5 py-2.5")}>Start free</Link>
+          <Link href="/login" className="whitespace-nowrap text-neutral-300 transition-colors hover:text-white">Log in</Link>
+          <Link href="/signup" className={`${cta.replace("px-6 py-3", "px-5 py-2.5")} whitespace-nowrap px-3 py-2 sm:px-5 sm:py-2.5`}>
+            Start free
+          </Link>
         </div>
       </nav>
 
       {/* 1. Hero */}
       <div className="relative mx-auto grid max-w-6xl gap-14 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:py-16">
-        <div>
+        <div className="min-w-0">
           <p className="inline-flex items-center gap-2 border border-white/20 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1.5px] text-neutral-200">
             <svg className="h-3 w-3 text-[#1c69d4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
               <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" strokeLinejoin="round" />
@@ -227,7 +229,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="lg:pt-10">
+        <div className="min-w-0 lg:pt-10">
           {bot ? (
             <Chat config={publicConfig(bot)} variant="panel" />
           ) : (

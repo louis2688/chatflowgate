@@ -1,0 +1,73 @@
+# Chatnode for n8n
+
+> Chatnode is a security gateway and white-label chat frontend for n8n Chat
+> workflows. Visitors talk to Chatnode, which authenticates, rate limits, and
+> meters every message before forwarding it to the customer's n8n webhook.
+
+Site: https://www.chatnode.app/
+
+## What it is
+
+n8n builds the assistant. Chatnode is the layer between the public and that
+workflow, so a chat trigger can be exposed to real users without publishing the
+webhook URL, absorbing abuse, or building auth, rate limiting, and analytics by
+hand. It is a hosted product with a free tier; the widget embeds with one
+script tag.
+
+## Technical architecture
+
+- Hidden webhook: the n8n URL is stored server-side and is never sent to the
+  browser. The page only ever calls the Chatnode chat endpoint for a bot id.
+- Caller identity, most trusted first: an organization-scoped API key sent as
+  X-API-Key, a signed-in member of the owning organization, or a visitor token.
+- Visitor tokens: HMAC-SHA256, bound to a single bot id, expiring in 24 hours,
+  issued only after the parent page origin is checked against that bot's domain
+  allowlist. In lead capture mode a token is issued only after the contact form
+  is submitted, so the token itself proves the form was completed.
+- Rate limiting: token buckets per session and per IP, configured per bot,
+  answering HTTP 429 with a Retry-After header. Shared across instances through
+  Redis when configured, per-instance otherwise. The client IP is read a fixed
+  number of proxy hops from the right of X-Forwarded-For, so a forged header
+  cannot mint a fresh quota.
+- SSRF protection: webhook targets are DNS-resolved and rejected when they point
+  at loopback, private, link-local, or cloud metadata addresses. Redirects are
+  not followed. A self-hosted n8n must therefore be reachable on the public
+  internet.
+- Abuse controls: organization-scoped IP bans checked before any other work,
+  per-bot country allow and block lists, and hidden spam-trap fields on the
+  widget forms that are checked again server-side.
+- Metering: one message spends the monthly plan allowance first, then purchased
+  top-up credits, in a single atomic statement. HTTP 402 when both are empty.
+- Data retention: message content is never stored. One row per chat session
+  holds IP, country, region, city, parsed browser, OS, device, and a message
+  counter, plus submitted contact details in lead capture mode.
+- Multi-tenancy: bots, sessions, API keys, IP bans, credits, and members belong
+  to an organization, and every read and write is scoped to it.
+- Streaming: replies from n8n are parsed line by line (NDJSON token chunks, SSE
+  data frames, or a single JSON body) and streamed to the widget as text deltas.
+- Management API: an MCP server at /api/mcp exposes bot listing, creation,
+  updates, and analytics to AI clients, authenticated with an API key.
+
+## Primary use cases
+
+1. Exposing an n8n chatbot on a public website without publishing the webhook.
+2. Capping abuse and runaway model spend on a public chat workflow.
+3. White-labelling and reselling n8n chatbots to clients from one dashboard.
+4. Capturing leads before a conversation starts and forwarding them to n8n.
+
+## Plans
+
+Free $0/month: 1 bot, 1 seat, 500 messages, Chatnode badge shown.
+Lite $19/month: 3 bots, 1 seat, 5,000 messages, badge removable.
+Pro $29/month: 10 bots, 3 seats, 10,000 messages, badge removable.
+Max $99/month: 30 bots, 6 seats, 50,000 messages, badge removable.
+
+Top-up credit packs cover usage past the monthly allowance and do not expire.
+
+## Limits and honest caveats
+
+- Chatnode does not store or replay conversation history. A transcript archive
+  is not a feature.
+- A self-hosted n8n on localhost or a private network address cannot be reached
+  by design; the SSRF guard blocks it.
+- Chatnode holds no formal security certification such as SOC 2 or ISO 27001.

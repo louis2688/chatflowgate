@@ -4,7 +4,7 @@ import { creditTxn, organization } from "./db/schema";
 import { planOf } from "./plans";
 
 // Pricing data lives in plans.ts (DB-free so it stays unit-testable).
-export { PACKAGES, type CreditPackage } from "./plans";
+export { PACKAGES, describeTxn, type CreditPackage } from "./plans";
 
 export type Usage = {
   planId: string;

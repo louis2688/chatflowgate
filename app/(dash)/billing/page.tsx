@@ -1,5 +1,6 @@
 import { requireContext } from "@/lib/server-auth";
-import { PACKAGES, getUsage, recentTxns, type CreditPackage } from "@/lib/credits";
+import Link from "next/link";
+import { PACKAGES, getUsage, type CreditPackage } from "@/lib/credits";
 import { PLANS, planOf } from "@/lib/plans";
 import { devTopUpAllowed } from "@/lib/config";
 import { changePlanAction, manageBillingAction, purchaseCreditsAction } from "@/app/(dash)/actions";
@@ -32,7 +33,7 @@ function PackageBody({ p }: { p: CreditPackage }) {
 
 export default async function BillingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { orgId } = await requireContext();
-  const [usage, txns] = await Promise.all([getUsage(orgId), recentTxns(orgId)]);
+  const usage = await getUsage(orgId);
   const checkout = (await searchParams).checkout;
   const plan = planOf(usage.planId);
   const stripeOn = !!process.env.STRIPE_SECRET_KEY;
@@ -185,16 +186,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold">Recent activity</h2>
-        <ul className="mt-3 divide-y divide-neutral-200 overflow-hidden rounded-xl border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
-          {txns.length === 0 && <li className="bg-white px-4 py-3 text-sm text-neutral-500 dark:bg-neutral-900/40">No activity yet.</li>}
-          {txns.map((t) => (
-            <li key={t.id} className="flex items-center justify-between bg-white px-4 py-2.5 text-sm dark:bg-neutral-900/40">
-              <span className="text-neutral-600 dark:text-neutral-400">{t.reason}</span>
-              <span className={t.delta < 0 ? "tabular-nums text-neutral-500" : "tabular-nums text-emerald-500"}>{t.delta > 0 ? "+" : ""}{t.delta.toLocaleString()}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/40">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Purchases, refunds and overage charges.</p>
+          <Link href="/billing/activity" className="text-sm font-medium text-emerald-500 hover:underline">View activity</Link>
+        </div>
       </div>
     </div>
   );

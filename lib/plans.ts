@@ -46,3 +46,18 @@ export const PACKAGES: CreditPackage[] = [
   { id: "professional", label: "Professional", credits: 25000, price: 70, popular: true },
   { id: "ultimate", label: "Ultimate", credits: 100000, price: 199 },
 ];
+
+// Ledger reasons are machine strings like "purchase:starter:cs_test_a1Fw...".
+// Render them as something a person can read, and never surface the Stripe
+// session id, which is noise to the customer.
+export function describeTxn(reason: string): string {
+  const [kind, detail] = reason.split(":");
+  if (kind === "purchase") {
+    const pack = PACKAGES.find((p) => p.id === detail);
+    return pack ? `${pack.label} pack purchased` : "Credits purchased";
+  }
+  if (kind === "message") return detail === "overage" ? "Message (over allowance)" : "Message";
+  if (kind === "refund") return "Refunded, the workflow did not reply";
+  if (kind === "grant") return "Credits granted";
+  return reason;
+}

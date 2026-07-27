@@ -8,7 +8,7 @@ import { assertHttpUrl } from "../lib/ssrf.ts";
 import { parseDelta } from "../lib/stream.ts";
 import { webhookAuthHeaders } from "../lib/webhook-auth.ts";
 import { readableText } from "../lib/contrast.ts";
-import { planOf, PLANS, PACKAGES } from "../lib/plans.ts";
+import { planOf, PLANS, PACKAGES, describeTxn } from "../lib/plans.ts";
 import { geoAllowed } from "../lib/geo.ts";
 
 process.env.SESSION_SECRET = "test-secret-0123456789012345678901234567";
@@ -210,5 +210,14 @@ for (const pack of PACKAGES) {
     }
   }
 }
+
+// --- ledger labels ---
+// A purchase reason carries the Stripe checkout session id; it must never be
+// rendered to the customer.
+const stripey = "purchase:starter:cs_test_a1FwNQXL4FgXPCDanXvb2FDXR6W9dITdZLD9c8di8VImUdEhKB9rj9M7Sf";
+assert.equal(describeTxn(stripey), "Starter pack purchased");
+assert.ok(!describeTxn(stripey).includes("cs_test"), "the Stripe session id must not reach the UI");
+assert.equal(describeTxn("message:overage"), "Message (over allowance)");
+assert.equal(describeTxn("unmapped-reason"), "unmapped-reason", "unknown reasons fall through unchanged");
 
 console.log("selfcheck: all assertions passed");

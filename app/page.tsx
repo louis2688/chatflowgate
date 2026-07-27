@@ -5,6 +5,8 @@ import Link from "next/link";
 import Chat from "@/components/Chat";
 import { getBot, publicConfig } from "@/lib/bots";
 import { PLANS } from "@/lib/plans";
+import { TESTIMONIALS, averageRating } from "@/lib/testimonials";
+import { publicStats } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
@@ -111,9 +113,10 @@ const FAQ: Array<[string, string]> = [
 ];
 
 export default async function Home() {
-  const bot = await getBot("demo");
+  const [bot, stats] = await Promise.all([getBot("demo"), publicStats()]);
   const plans = Object.values(PLANS);
   const paid = plans.filter((p) => p.price > 0);
+  const rating = averageRating();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -126,6 +129,15 @@ export default async function Home() {
         description:
           "Secure, white-label chat frontend and webhook gateway for n8n Chat workflows, with hidden webhooks, rate limiting, signed sessions, and multi-tenant workspaces.",
         url: "https://www.chatnode.app/",
+        ...(rating && TESTIMONIALS.some((t) => t.rating)
+          ? {
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: rating.toFixed(1),
+                reviewCount: String(TESTIMONIALS.filter((t) => t.rating).length),
+              },
+            }
+          : {}),
         offers: {
           "@type": "AggregateOffer",
           priceCurrency: "USD",
@@ -192,6 +204,20 @@ export default async function Home() {
             <li>Your webhook never reaches the browser</li>
             <li>Chat content is never stored</li>
           </ul>
+
+          {/* Counts come straight from the database and hide themselves until
+              they are worth showing, so this can never overstate the truth. */}
+          {stats && (
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-neutral-300">
+              <svg className="h-4 w-4 text-[#4a90e2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>
+                <strong className="font-semibold text-white">{stats.workspaces.toLocaleString()}</strong> workspaces and{" "}
+                <strong className="font-semibold text-white">{stats.messages.toLocaleString()}</strong> messages secured
+              </span>
+            </p>
+          )}
 
           <div className="mt-10">
             <p className={eyebrow}>Embed any bot</p>
@@ -308,6 +334,36 @@ export default async function Home() {
           </p>
         </div>
       </section>
+
+      {/* 5b. Testimonials. Renders nothing until lib/testimonials.ts has real,
+          permission-granted quotes in it. */}
+      {TESTIMONIALS.length > 0 && (
+        <section className="relative border-t border-white/10 bg-black/40">
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <p className={eyebrow}>What people say</p>
+            <h2 className={`${h2} mt-3`}>In the words of the people using it</h2>
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {TESTIMONIALS.map((t) => (
+                <figure key={t.name + t.quote.slice(0, 24)} className="flex flex-col border border-white/10 bg-white/[0.02] p-6">
+                  {typeof t.rating === "number" && (
+                    <div className="mb-3 flex gap-0.5" aria-label={`${t.rating} out of 5`}>
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <svg key={i} className={`h-4 w-4 ${i < Math.round(t.rating as number) ? "text-[#4a90e2]" : "text-white/15"}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                      ))}
+                    </div>
+                  )}
+                  <blockquote className="flex-1 text-sm font-light leading-relaxed text-neutral-300">&ldquo;{t.quote}&rdquo;</blockquote>
+                  <figcaption className="mt-4 text-xs uppercase tracking-[1px] text-neutral-500">
+                    <span className="font-bold text-white">{t.name}</span> &middot; {t.role}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 6. FAQ */}
       <section className="relative border-t border-white/10 bg-black/40">

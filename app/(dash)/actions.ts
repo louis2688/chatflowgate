@@ -10,7 +10,7 @@ import { createBot, deleteBot, updateBot } from "@/lib/bots";
 import { createApiKey, revokeApiKey } from "@/lib/apikeys";
 import { PACKAGES, addCredits } from "@/lib/credits";
 import { PLANS, planOf, type PlanId } from "@/lib/plans";
-import { appBaseUrl, ensureStripeCustomer, planPriceId, stripe, stripeEnabled } from "@/lib/stripe";
+import { appBaseUrl, ensureStripeCustomer, packageProductId, planPriceId, stripe, stripeEnabled } from "@/lib/stripe";
 import { addIpBan, removeIpBan } from "@/lib/ipbans";
 import { assertHttpUrl } from "@/lib/ssrf";
 import { devTopUpAllowed } from "@/lib/config";
@@ -242,6 +242,7 @@ export async function purchaseCreditsAction(_prev: ActionResult | null, formData
 
   if (stripeEnabled()) {
     const s = stripe()!;
+    const productId = packageProductId(pkg.id);
     const session = await s.checkout.sessions.create({
       mode: "payment",
       customer: await ensureStripeCustomer(orgId),
@@ -250,8 +251,13 @@ export async function purchaseCreditsAction(_prev: ActionResult | null, formData
           quantity: 1,
           price_data: {
             currency: "usd",
+            // plans.ts stays the source of truth for the amount even when the
+            // product is dashboard-managed: price_data sets it per session, so
+            // editing the price in Stripe has no effect on what we charge.
             unit_amount: pkg.price * 100,
-            product_data: { name: `Chatnode ${pkg.label} pack - ${pkg.credits.toLocaleString()} messages` },
+            ...(productId
+              ? { product: productId }
+              : { product_data: { name: `Chatnode ${pkg.label} pack - ${pkg.credits.toLocaleString()} messages` } }),
           },
         },
       ],

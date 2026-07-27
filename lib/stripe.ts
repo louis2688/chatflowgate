@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { organization } from "./db/schema";
-import { PLANS, type PlanId } from "./plans";
+import { PACKAGES, PLANS, type PlanId } from "./plans";
 
 // Lazy singleton: billing works without Stripe (dev top-up) until the key is set.
 let client: Stripe | null | undefined;
@@ -43,6 +43,21 @@ const PRODUCT_ENV: Record<Exclude<PlanId, "free">, string> = {
   pro: "STRIPE_PRODUCT_PRO",
   max: "STRIPE_PRODUCT_MAX",
 };
+
+// Same rationale as PRODUCT_ENV, for the one-off credit packs: STRIPE_PRODUCT_
+// plus the upper-cased pack id. Packs are single payments, so unlike plans they
+// need no stable price id -- naming the product is enough. Without one Stripe
+// mints a throwaway product per checkout and the dashboard slowly fills with
+// duplicates of the same four packs.
+//
+// Derived from PACKAGES rather than a hand-written map so a fifth pack cannot
+// silently ship with no product mapping. The membership test also means an
+// unrecognised id can never interpolate into an arbitrary env var name.
+// undefined is the honest fallback: create the product inline, as before.
+export function packageProductId(packageId: string): string | undefined {
+  if (!PACKAGES.some((p) => p.id === packageId)) return undefined;
+  return process.env[`STRIPE_PRODUCT_${packageId.toUpperCase()}`]?.trim() || undefined;
+}
 
 // One recurring Price per paid plan, found (or created) by lookup key, so plan
 // switches reference a stable price id. Created lazily on first use per Stripe

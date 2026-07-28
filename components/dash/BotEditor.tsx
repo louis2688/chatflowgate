@@ -30,9 +30,47 @@ type Device = "desktop" | "mobile";
 // is really 335px on a 375px handset. Showing that clamp is the whole point of
 // the toggle: without it someone picks 600px, it looks fine here, and it is
 // silently squashed on every phone that loads the site.
-const PHONE_W = 375;
-const PHONE_H = 812;
-const PHONE_SCALE = 0.5;
+// Portrait CSS viewport sizes -- logical pixels, which is what 100vw/100dvh
+// resolve to and therefore the only number that affects the clamp. Not hardware
+// pixels: an iPhone 16 Pro Max is 1320 physical across but 430 to CSS.
+type Viewport = { w: number; h: number };
+const PHONES = [
+  { id: "iphone-se", label: "iPhone SE", kind: "ios", w: 375, h: 667 },
+  { id: "iphone-13-mini", label: "iPhone 13 mini", kind: "ios", w: 375, h: 812 },
+  { id: "iphone-14", label: "iPhone 14 / 13", kind: "ios", w: 390, h: 844 },
+  { id: "iphone-16", label: "iPhone 16 / 15 / 14 Pro", kind: "ios", w: 393, h: 852 },
+  { id: "iphone-16-pro", label: "iPhone 16 Pro", kind: "ios", w: 402, h: 874 },
+  { id: "iphone-14-plus", label: "iPhone 14 Plus", kind: "ios", w: 428, h: 926 },
+  { id: "iphone-16-pro-max", label: "iPhone 16 Pro Max", kind: "ios", w: 430, h: 932 },
+  { id: "galaxy-s23", label: "Galaxy S23 / S24", kind: "android", w: 360, h: 780 },
+  { id: "galaxy-s24-ultra", label: "Galaxy S24 Ultra", kind: "android", w: 384, h: 824 },
+  { id: "pixel-7", label: "Pixel 7 / 8", kind: "android", w: 412, h: 915 },
+  { id: "pixel-9-pro-xl", label: "Pixel 9 Pro XL", kind: "android", w: 448, h: 998 },
+] as const;
+const DEFAULT_PHONE = "iphone-14";
+
+// Custom bounds. The upper end is deliberately tablet-sized rather than
+// unbounded: the frame is drawn at a scale derived from the height, so a silly
+// number would shrink the preview to nothing instead of erroring.
+const CUSTOM = { minW: 240, maxW: 1024, minH: 320, maxH: 1400 };
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+// Half size, shrinking further only when a tall handset would outgrow the
+// preview column, so every device sits in the same visual budget.
+const FRAME_MAX_H = 460;
+const frameScale = (vp: Viewport) => Math.min(0.5, FRAME_MAX_H / vp.h);
+
+// Below this width embed.js drops the floating panel and goes fullscreen, so
+// Width/Height stop applying entirely. Keep in sync with MOBILE_MAX there.
+const MOBILE_BREAKPOINT = 640;
+const isFullscreen = (vp: Viewport) => vp.w <= MOBILE_BREAKPOINT;
+
+// What embed.js renders on a viewport too wide for the fullscreen rule:
+// min(width, 100vw - 40px) and min(height, 100dvh - 120px), its reserved margins.
+const clampedPanel = (vp: Viewport, w: number, h: number) => ({
+  w: Math.min(w, vp.w - 40),
+  h: Math.min(h, vp.h - 120),
+});
 
 // The delete form is rendered outside the edit form and reached by this id.
 const DELETE_FORM_ID = "delete-bot-form";
@@ -71,7 +109,7 @@ function Avatar({ logoUrl, color, fg, name }: { logoUrl: string; color: string; 
 // of the real widget rather than a lookalike. Still a mock, not the live
 // component: it has to redraw on every keystroke and works for an unsaved bot
 // that has no id, no session, and no gateway to talk to.
-function ChatWindow({ s }: { s: PreviewState }) {
+function ChatWindow({ s, onMinimize }: { s: PreviewState; onMinimize?: () => void }) {
   const fg = readableText(s.color);
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
@@ -84,7 +122,19 @@ function ChatWindow({ s }: { s: PreviewState }) {
             Online
           </p>
         </div>
-        <button type="button" className="ms-auto text-neutral-400" tabIndex={-1}><Minus /></button>
+        {/* Inert decoration normally, but live when the caller passes a handler:
+            fullscreen previews hide the launcher exactly as the real widget
+            does, so this becomes the only way back out. */}
+        <button
+          type="button"
+          className="ms-auto text-neutral-400"
+          tabIndex={onMinimize ? undefined : -1}
+          aria-label={onMinimize ? "Minimize chat" : undefined}
+          aria-hidden={onMinimize ? undefined : true}
+          onClick={onMinimize}
+        >
+          <Minus />
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <div className="w-fit max-w-[85%] rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-2 text-sm dark:bg-neutral-800/80">
@@ -113,15 +163,16 @@ function ChatWindow({ s }: { s: PreviewState }) {
   );
 }
 
-function PhoneFrame({ children }: { children: React.ReactNode }) {
+function PhoneFrame({ vp, children }: { vp: Viewport; children: React.ReactNode }) {
+  const k = frameScale(vp);
   return (
     <div className="grid h-full w-full place-items-center">
       <div
         className="overflow-hidden rounded-[1.75rem] border-[6px] border-neutral-800 bg-white shadow-xl dark:border-neutral-600 dark:bg-neutral-900"
         // content-box so the bezel sits outside the viewport: with the default
-        // border-box the 6px border eats into the 375px the panel is measured
+        // border-box the 6px border eats into the width the panel is measured
         // against, and a correctly-sized panel gets clipped by max-w-full.
-        style={{ width: PHONE_W * PHONE_SCALE, height: PHONE_H * PHONE_SCALE, boxSizing: "content-box" }}
+        style={{ width: vp.w * k, height: vp.h * k, boxSizing: "content-box" }}
       >
         {children}
       </div>
@@ -129,11 +180,12 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Preview({ s, open, setOpen, device }: { s: PreviewState; open: boolean; setOpen: (v: boolean) => void; device: Device }) {
+function Preview({ s, open, setOpen, device, vp }: { s: PreviewState; open: boolean; setOpen: (v: boolean) => void; device: Device; vp: Viewport }) {
   const mobile = device === "mobile";
+  const k = frameScale(vp);
   if (s.widgetType === "inline") {
     const inline = <div className="h-full w-full p-2"><ChatWindow s={s} /></div>;
-    return mobile ? <PhoneFrame>{inline}</PhoneFrame> : inline;
+    return mobile ? <PhoneFrame vp={vp}>{inline}</PhoneFrame> : inline;
   }
   const align: Record<string, string> = {
     "bottom-right": "items-end justify-end",
@@ -146,36 +198,48 @@ function Preview({ s, open, setOpen, device }: { s: PreviewState; open: boolean;
   // Desktop previews at a flat 0.6. Mobile applies the same clamp embed.js
   // does before scaling, so an oversized panel visibly hits the phone edges
   // here exactly as it would on a real handset.
-  const panel = mobile
-    ? { width: Math.min(s.widgetWidth, PHONE_W - 40) * PHONE_SCALE, height: Math.min(s.widgetHeight, PHONE_H - 120) * PHONE_SCALE }
-    : { width: s.widgetWidth * 0.6, height: s.widgetHeight * 0.6 };
-  const dot = mobile ? 28 : 48;
+  const fit = clampedPanel(vp, s.widgetWidth, s.widgetHeight);
+  // On a phone the panel is the whole screen: Width and Height do not apply.
+  const full = mobile && isFullscreen(vp);
+  const panel = !mobile
+    ? { width: s.widgetWidth * 0.6, height: s.widgetHeight * 0.6 }
+    : full
+      ? { width: vp.w * k, height: vp.h * k }
+      : { width: fit.w * k, height: fit.h * k };
+  // embed.js draws a 56px launcher inset 20px from the edges; both scale with
+  // the frame so the cluster keeps its real proportions on every device.
+  const dot = mobile ? Math.round(56 * k) : 48;
+  const pad = mobile ? 20 * k : undefined;
   const stage = (
-    <div className={`flex h-full w-full bg-white dark:bg-neutral-900 ${mobile ? "p-2.5" : "rounded-xl p-6 shadow-inner"} ${align[s.position]}`}>
-      <div className={`flex ${colReverse} ${clusterAlign} gap-2`}>
+    <div className={`flex h-full w-full bg-white dark:bg-neutral-900 ${mobile ? "" : "rounded-xl p-6 shadow-inner"} ${align[s.position]}`} style={mobile ? { padding: full && open ? 0 : pad } : undefined}>
+      <div className={`flex ${colReverse} ${clusterAlign} gap-2 ${full && open ? "h-full w-full" : ""}`}>
         {open ? (
-          <div className="max-h-full max-w-full overflow-hidden rounded-xl shadow-xl" style={panel}>
-            <ChatWindow s={s} />
+          <div className={`max-h-full max-w-full overflow-hidden shadow-xl ${full ? "" : "rounded-xl"}`} style={panel}>
+            <ChatWindow s={s} onMinimize={full ? () => setOpen(false) : undefined} />
           </div>
         ) : (
           <div className={`rounded-xl border border-neutral-200 bg-white px-3 py-2 text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 ${mobile ? "max-w-[140px] text-[10px] leading-snug" : "max-w-[180px] text-xs"}`}>
             {s.greeting || s.welcome || "Hi! How can I help?"}
           </div>
         )}
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className={`flex flex-shrink-0 items-center justify-center gap-2 rounded-full text-white shadow-lg ${!open && s.buttonText ? "px-4" : ""}`}
-          style={{ background: s.color, height: dot, width: !open && s.buttonText ? undefined : dot }}
-          aria-label={s.buttonText || "Open chat"}
-        >
-          {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, mobile ? 14 : 22) : BotGlyph(mobile ? 14 : 22)}
-          {!open && s.buttonText && <span className={mobile ? "text-[10px] font-medium" : "text-sm font-medium"}>{s.buttonText}</span>}
-        </button>
+        {/* Hidden while a fullscreen panel covers it, matching the
+            .chatnode-launcher[data-open=true] rule in embed.js. */}
+        {!(full && open) && (
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className={`flex flex-shrink-0 items-center justify-center gap-2 rounded-full text-white shadow-lg ${!open && s.buttonText ? "px-4" : ""}`}
+            style={{ background: s.color, height: dot, width: !open && s.buttonText ? undefined : dot }}
+            aria-label={s.buttonText || "Open chat"}
+          >
+            {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, mobile ? 14 : 22) : BotGlyph(mobile ? 14 : 22)}
+            {!open && s.buttonText && <span className={mobile ? "text-[10px] font-medium" : "text-sm font-medium"}>{s.buttonText}</span>}
+          </button>
+        )}
       </div>
     </div>
   );
-  return mobile ? <PhoneFrame>{stage}</PhoneFrame> : stage;
+  return mobile ? <PhoneFrame vp={vp}>{stage}</PhoneFrame> : stage;
 }
 
 export default function BotEditor({ bot }: { bot?: Bot }) {
@@ -184,6 +248,14 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
   const [showEmbed, setShowEmbed] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [device, setDevice] = useState<Device>("desktop");
+  const [phoneId, setPhoneId] = useState<string>(DEFAULT_PHONE);
+  const [custom, setCustom] = useState<Viewport>({ w: 390, h: 844 });
+  // Clamped on read, not on change, so a half-typed "4" does not snap to 240
+  // under the cursor while someone is still typing "412".
+  const vp: Viewport =
+    phoneId === "custom"
+      ? { w: clamp(custom.w || CUSTOM.minW, CUSTOM.minW, CUSTOM.maxW), h: clamp(custom.h || CUSTOM.minH, CUSTOM.minH, CUSTOM.maxH) }
+      : PHONES.find((d) => d.id === phoneId) ?? PHONES.find((d) => d.id === DEFAULT_PHONE)!;
   const [s, setS] = useState<PreviewState & { allowAnonymous: boolean; geoMode: "off" | "allow" | "block" }>({
     name: bot?.name ?? "",
     welcome: bot?.welcome ?? "Hi! How can I help you today?",
@@ -200,6 +272,8 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     geoMode: (bot?.geoMode as "off" | "allow" | "block") ?? "off",
   });
   const set = (patch: Partial<typeof s>) => setS((p) => ({ ...p, ...patch }));
+  // What the panel actually becomes on the selected handset, used by the readout.
+  const fit = clampedPanel(vp, s.widgetWidth, s.widgetHeight);
 
   const origin = typeof window === "undefined" ? "https://www.chatnode.app" : window.location.origin;
   // HTML-attribute-escape free text so quotes in a greeting can't break the tag.
@@ -408,6 +482,9 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                     <input id="widgetHeight" name="widgetHeight" type="number" min={320} max={900} value={s.widgetHeight}
                       onChange={(e) => { set({ widgetHeight: Number(e.target.value) || 0 }); setPreviewOpen(true); }} className={field} />
                   </div>
+                  <p className="col-span-2 -mt-1 text-xs text-neutral-500">
+                    Desktop only. On screens narrower than {MOBILE_BREAKPOINT}px the widget goes fullscreen, the way every chat widget does, and these are ignored.
+                  </p>
                 </div>
               )}
               {s.widgetType === "inline" && (
@@ -532,8 +609,67 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                 <Phone />
               </button>
             </div>
+            {/* No name= on these controls on purpose: they sit inside the edit
+                form and are preview-only, so they must not be submitted. */}
+            {device === "mobile" && (
+              <div className="mb-3 space-y-2">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <select
+                    value={phoneId}
+                    onChange={(e) => setPhoneId(e.target.value)}
+                    aria-label="Preview device"
+                    className="rounded-lg border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                  >
+                    <optgroup label="iPhone">
+                      {PHONES.filter((d) => d.kind === "ios").map((d) => (
+                        <option key={d.id} value={d.id}>{d.label} - {d.w}x{d.h}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Android">
+                      {PHONES.filter((d) => d.kind === "android").map((d) => (
+                        <option key={d.id} value={d.id}>{d.label} - {d.w}x{d.h}</option>
+                      ))}
+                    </optgroup>
+                    <option value="custom">Custom size</option>
+                  </select>
+                  {phoneId === "custom" && (
+                    <span className="flex items-center gap-1">
+                      <input
+                        type="number" min={CUSTOM.minW} max={CUSTOM.maxW} value={custom.w}
+                        onChange={(e) => setCustom({ ...custom, w: Number(e.target.value) })}
+                        aria-label="Custom viewport width"
+                        className="w-16 rounded-lg border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                      />
+                      <span className="text-xs text-neutral-500">x</span>
+                      <input
+                        type="number" min={CUSTOM.minH} max={CUSTOM.maxH} value={custom.h}
+                        onChange={(e) => setCustom({ ...custom, h: Number(e.target.value) })}
+                        aria-label="Custom viewport height"
+                        className="w-16 rounded-lg border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                      />
+                    </span>
+                  )}
+                </div>
+                <p className="text-center text-[11px] text-neutral-500">
+                  {isFullscreen(vp) ? (
+                    <>
+                      {vp.w} x {vp.h} screen - the panel fills it.{" "}
+                      <span className="text-neutral-400">Width and Height apply to desktop only.</span>
+                    </>
+                  ) : (
+                    <>
+                      {vp.w} x {vp.h} screen - panel renders{" "}
+                      <span className={fit.w < s.widgetWidth || fit.h < s.widgetHeight ? "font-medium text-amber-600 dark:text-amber-400" : ""}>
+                        {fit.w} x {fit.h}
+                      </span>
+                      {(fit.w < s.widgetWidth || fit.h < s.widgetHeight) && " (clamped to fit)"}
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
             <div className="min-h-0 flex-1">
-              <Preview s={s} open={previewOpen} setOpen={setPreviewOpen} device={device} />
+              <Preview s={s} open={previewOpen} setOpen={setPreviewOpen} device={device} vp={vp} />
             </div>
           </div>
         </div>

@@ -39,8 +39,27 @@
   var chatIcon = icon("M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z");
   var closeIcon = icon("M6 6l12 12M18 6L6 18");
 
+  // Phones get a fullscreen panel, desktops a floating one -- the behaviour
+  // every established chat widget has. Expressed as a media query rather than
+  // measured in JS so rotation, resize and the on-screen keyboard are handled
+  // by the browser with no listeners. !important because the base rules below
+  // are inline styles, which otherwise win.
+  var MOBILE_MAX = 640; // keep in sync with BotEditor's MOBILE_BREAKPOINT
+  var style = document.createElement("style");
+  style.textContent =
+    "@media (max-width:" + MOBILE_MAX + "px){" +
+    ".chatnode-frame{top:0!important;left:0!important;right:0!important;bottom:0!important;" +
+    "width:100vw!important;height:100vh!important;height:100dvh!important;" +
+    "border-radius:0!important;box-shadow:none!important}" +
+    // The panel covers the screen, so the launcher under it is an invisible
+    // tap target. The widget header's own minimize button is the way back out.
+    ".chatnode-launcher[data-open='true']{display:none!important}" +
+    "}";
+  document.head.appendChild(style);
+
   var frame = document.createElement("iframe");
   frame.title = "Chat";
+  frame.className = "chatnode-frame";
   frame.style.cssText =
     "position:fixed;" + vert + ":92px;" + side + ":20px;" +
     "width:min(" + w + "px,calc(100vw - 40px));height:min(" + h + "px,calc(100dvh - 120px));" +
@@ -63,6 +82,7 @@
 
   var btn = document.createElement("button");
   btn.type = "button";
+  btn.className = "chatnode-launcher";
   btn.style.cssText =
     "position:fixed;" + vert + ":20px;" + side + ":20px;height:56px;border:0;cursor:pointer;" +
     "display:flex;align-items:center;justify-content:center;gap:8px;" +
@@ -103,6 +123,8 @@
     }
     btn.setAttribute("aria-label", open ? "Close chat" : buttonText || "Open chat");
     btn.setAttribute("aria-expanded", String(open));
+    // Drives the fullscreen stylesheet rule above.
+    btn.setAttribute("data-open", open ? "true" : "false");
   }
 
   btn.onclick = function () {

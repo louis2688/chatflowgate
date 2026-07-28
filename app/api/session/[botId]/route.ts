@@ -102,11 +102,17 @@ export async function POST(req: NextRequest, { params }: Params) {
   // real visitor. Issue the token so the chat works, but do not record a fake
   // lead in analytics and do not fire chat_started at the customer's production
   // n8n workflow, which could create a bogus CRM record or notify their sales team.
+  // Both guarded: this is preview detection, and a visitor must still be able to
+  // start a chat when it fails. Falling back to false treats them as a real
+  // visitor, which is the safe side -- the lead gets recorded and forwarded
+  // rather than silently dropped. Unguarded, a throw here 500s the request and
+  // the widget shows "check your details", which is nothing to do with it.
   const authed = await auth.api.getSession({ headers: req.headers }).catch(() => null);
-  const previewing = authed ? await isOrgMember(authed.user.id, bot.organizationId) : false;
+  const previewing = authed ? await isOrgMember(authed.user.id, bot.organizationId).catch(() => false) : false;
   if (!previewing) {
     await recordLeadSession(bot.id, sid, { ip: clientIp(req), ua: req.headers.get("user-agent"), ...clientGeo(req) }, lead).catch(() => {});
-    await forwardLead(bot, sid, lead);
+    // Best effort by design: n8n being down must not cost the visitor their chat.
+    await forwardLead(bot, sid, lead).catch(() => {});
   }
   return NextResponse.json({ token }, { headers: cors });
 }

@@ -205,7 +205,27 @@ export default function Chat({
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        setLeadError("Could not start the chat. Please check your details and try again.");
+        // The gateway refuses for reasons that have nothing to do with what was
+        // typed -- a rate limit, a geofence, a bot that no longer exists. Saying
+        // "check your details" for those sends people to re-edit a form that was
+        // fine, so map the reason the server actually gave.
+        const body = await res.json().catch(() => null);
+        const fields: string[] = Array.isArray(body?.fields) ? body.fields : [];
+        setLeadError(
+          body?.error === "lead_required" && fields.length
+            ? `Please fill in your ${fields.join(", ")}.`
+            : body?.error === "invalid_lead"
+              ? "Please check the details you entered."
+              : body?.error === "rate_limited"
+                ? "Too many attempts. Please wait a minute and try again."
+                : body?.error === "country_not_allowed"
+                  ? "Chat is not available in your region."
+                  : body?.error === "origin_not_allowed"
+                    ? "This site is not allowed to use this chat."
+                    : body?.error === "not_found"
+                      ? "This chat is no longer available."
+                      : "Could not start the chat. Please try again in a moment.",
+        );
         return;
       }
       const data = await res.json();

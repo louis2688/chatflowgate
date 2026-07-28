@@ -20,6 +20,8 @@ const svg = (children: React.ReactNode, size = 16) => (
 const BotGlyph = (s?: number) => svg(<><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /><line x1="8" y1="16" x2="8.01" y2="16" /><line x1="16" y1="16" x2="16.01" y2="16" /></>, s);
 const Minus = () => svg(<line x1="5" y1="12" x2="19" y2="12" />, 16);
 const Send = () => svg(<><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></>, 14);
+// Same path the real widget uses for its Attach file button in Chat.tsx.
+const Clip = () => svg(<path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />, 16);
 const Monitor = () => svg(<><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>, 16);
 const Phone = () => svg(<><rect x="7" y="2" width="10" height="20" rx="2" /><line x1="11" y1="18.5" x2="13" y2="18.5" /></>, 16);
 
@@ -134,6 +136,7 @@ type PreviewState = {
   suggestedPrompts: string;
   widgetWidth: number;
   widgetHeight: number;
+  allowFileUpload: boolean;
 };
 
 function Avatar({ logoUrl, color, fg, name }: { logoUrl: string; color: string; fg: string; name: string }) {
@@ -195,6 +198,11 @@ function ChatWindow({ s, onMinimize }: { s: PreviewState; onMinimize?: () => voi
         })()}
       </div>
       <div className="flex items-end gap-2 border-t border-neutral-100 p-3 dark:border-neutral-800/60">
+        {s.allowFileUpload && (
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-neutral-200 text-neutral-500 dark:border-neutral-700" aria-hidden>
+            <Clip />
+          </div>
+        )}
         <div className="min-h-10 flex-1 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">Type a message</div>
         <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl" style={{ background: s.color, color: fg }}><Send /></div>
       </div>
@@ -314,6 +322,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     suggestedPrompts: (bot?.suggestedPrompts ?? []).join("\n"),
     widgetWidth: bot?.widgetWidth ?? 400,
     widgetHeight: bot?.widgetHeight ?? 640,
+    allowFileUpload: bot?.allowFileUpload ?? false,
     allowAnonymous: bot ? bot.allowAnonymous : true,
     geoMode: (bot?.geoMode as "off" | "allow" | "block") ?? "off",
   });
@@ -594,7 +603,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                   <div className="flex flex-wrap gap-4">
                     <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="rtl" defaultChecked={bot?.rtl ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> RTL layout</label>
                     <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="consentRequired" defaultChecked={bot?.consentRequired ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> Consent screen</label>
-                    <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="allowFileUpload" defaultChecked={bot?.allowFileUpload ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> File upload</label>
+                    <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="allowFileUpload" checked={s.allowFileUpload} onChange={(e) => { set({ allowFileUpload: e.target.checked }); setPreviewOpen(true); }} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> File upload</label>
                   </div>
                   <div>
                     <label className={label} htmlFor="consentText">Consent text</label>

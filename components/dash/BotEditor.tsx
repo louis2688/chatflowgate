@@ -598,7 +598,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                 <p className="mt-1 text-xs text-neutral-500">
                   {s.widgetType === "inline"
                     ? "Only used by the popup type, which has a closed state to show it in."
-                    : "Appears next to the launcher before the visitor opens the chat."}
+                    : "Appears when the visitor hovers the launcher, before they open the chat. Phones have no hover, so there it shows on its own. The preview always shows it so you can see what you are typing."}
                 </p>
               </div>
               <div>

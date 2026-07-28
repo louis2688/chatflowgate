@@ -87,10 +87,20 @@
     "position:fixed;" + vert + ":20px;" + side + ":20px;height:56px;border:0;cursor:pointer;" +
     "display:flex;align-items:center;justify-content:center;gap:8px;" +
     "background:" + color + ";box-shadow:0 8px 24px rgba(0,0,0,.22);z-index:2147483001;transition:transform .15s ease;";
-  btn.onmouseenter = function () { btn.style.transform = "scale(1.06)"; };
-  btn.onmouseleave = function () { btn.style.transform = "scale(1)"; };
+  // Also toggles the greeting. render() is a hoisted function declaration, so
+  // calling it from here before its definition below is fine.
+  btn.onmouseenter = function () { btn.style.transform = "scale(1.06)"; hovered = true; render(); };
+  btn.onmouseleave = function () { btn.style.transform = "scale(1)"; hovered = false; render(); };
+  // Keyboard users get the same reveal: the greeting is content, not decoration.
+  btn.onfocus = function () { hovered = true; render(); };
+  btn.onblur = function () { hovered = false; render(); };
 
-  // Greeting bubble, shown next to the launcher while the chat is closed.
+  // Greeting bubble, revealed on hover of the launcher rather than sitting
+  // there permanently. Touch devices have no hover at all, so on those it keeps
+  // the old always-while-closed behaviour -- gating purely on hover would make
+  // the greeting invisible on every phone.
+  var canHover = typeof window.matchMedia === "function" && window.matchMedia("(hover: hover)").matches;
+  var hovered = false;
   var bubble = null;
   if (greeting) {
     bubble = document.createElement("div");
@@ -105,7 +115,7 @@
   var open = false;
   function render() {
     frame.style.display = open ? "block" : "none";
-    if (bubble) bubble.style.display = open ? "none" : "block";
+    if (bubble) bubble.style.display = !open && (!canHover || hovered) ? "block" : "none";
     if (!open && buttonText) {
       btn.style.width = "auto";
       btn.style.padding = "0 18px";

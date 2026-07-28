@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import type { PublicBotConfig } from "@/lib/bots";
+import { LOCALES, DEFAULT_LOCALE, isLocale, localeDir, t as tr, type Locale } from "@/lib/i18n";
 
 type Msg = { role: "user" | "bot" | "notice"; text: string };
 
@@ -127,9 +128,21 @@ export default function Chat({
   const [leadDone, setLeadDone] = useState(config.allowAnonymous);
   const [leadBusy, setLeadBusy] = useState(false);
   const [leadError, setLeadError] = useState<string | null>(null);
+  // Visitor's own choice, remembered per bot. Defaults to English rather than
+  // sniffing navigator.language: a customer whose site is English does not want
+  // the widget silently switching because the browser is set to something else.
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  const t = (key: Parameters<typeof tr>[1], vars?: Record<string, string | number>) => tr(locale, key, vars);
 
   useEffect(() => {
     setMounted(true);
+    // Remembered language, per bot so two widgets on one site stay independent.
+    try {
+      const saved = window.localStorage.getItem(`chatnode.lang.${config.id}`);
+      if (isLocale(saved)) setLocale(saved);
+    } catch {
+      // storage blocked (private mode, third-party cookie rules): stay on English
+    }
     // token handed in via the URL hash by embed.js (#t=...)
     if (typeof window !== "undefined" && window.location.hash.startsWith("#t=")) {
       writeToken(config.id, decodeURIComponent(window.location.hash.slice(3)));
@@ -215,16 +228,16 @@ export default function Chat({
           body?.error === "lead_required" && fields.length
             ? `Please fill in your ${fields.join(", ")}.`
             : body?.error === "invalid_lead"
-              ? "Please check the details you entered."
+              ? t("errCheckDetails")
               : body?.error === "rate_limited"
-                ? "Too many attempts. Please wait a minute and try again."
+                ? t("errTooMany")
                 : body?.error === "country_not_allowed"
-                  ? "Chat is not available in your region."
+                  ? t("errRegion")
                   : body?.error === "origin_not_allowed"
-                    ? "This site is not allowed to use this chat."
+                    ? t("errOrigin")
                     : body?.error === "not_found"
-                      ? "This chat is no longer available."
-                      : "Could not start the chat. Please try again in a moment.",
+                      ? t("errGone")
+                      : t("errGeneric"),
         );
         return;
       }
@@ -233,7 +246,7 @@ export default function Chat({
       setLeadDone(true);
       if (payload.message) void send(payload.message);
     } catch {
-      setLeadError("Could not start the chat. Please try again.");
+      setLeadError(t("errGeneric"));
     } finally {
       setLeadBusy(false);
     }
@@ -265,19 +278,19 @@ export default function Chat({
         if (config.allowAnonymous) res = await postChat(await getToken(true));
         else {
           setLeadDone(false);
-          setMessages((m) => [...m, { role: "notice", text: "Your session expired. Please enter your details again." }]);
+          setMessages((m) => [...m, { role: "notice", text: t("noticeExpired") }]);
           return;
         }
       }
       if (res.status === 402) {
-        setMessages((m) => [...m, { role: "notice", text: "This assistant is out of message credits." }]);
+        setMessages((m) => [...m, { role: "notice", text: t("noticeCredits") }]);
         return;
       }
       if (res.status === 429) {
         const wait = res.headers.get("Retry-After");
         setMessages((m) => [
           ...m,
-          { role: "notice", text: wait ? `Sending too fast - try again in ${wait}s.` : "Sending too fast - give it a moment." },
+          { role: "notice", text: wait ? t("noticeTooFastWait", { s: wait }) : t("noticeTooFast") },
         ]);
         return;
       }
@@ -309,7 +322,7 @@ export default function Chat({
         if (!added) setMessages((m) => [...m, { role: "bot", text: acc || "..." }]);
       }
     } catch {
-      setMessages((m) => [...m, { role: "notice", text: "Something went wrong - please try again." }]);
+      setMessages((m) => [...m, { role: "notice", text: t("noticeWrong") }]);
     } finally {
       fileRef.current = null;
       setBusy(false);
@@ -325,7 +338,7 @@ export default function Chat({
         : "flex h-dvh flex-col bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 
   return (
-    <div className={shell} dir={config.rtl ? "rtl" : "ltr"} style={{ "--brand": config.color, "--brand-fg": config.brandFg } as React.CSSProperties}>
+    <div className={shell} dir={config.rtl || localeDir(locale) === "rtl" ? "rtl" : "ltr"} style={{ "--brand": config.color, "--brand-fg": config.brandFg } as React.CSSProperties}>
       <header className="flex items-center gap-3 border-b border-neutral-100 px-4 py-3 dark:border-neutral-800/60">
         {config.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -339,13 +352,33 @@ export default function Chat({
           <p className="truncate text-sm font-semibold">{config.name}</p>
           <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-            Online
+            {t("online")}
           </p>
         </div>
+        <select
+          value={locale}
+          aria-label={t("language")}
+          title={t("language")}
+          onChange={(e) => {
+            const next = e.target.value;
+            if (!isLocale(next)) return;
+            setLocale(next);
+            try {
+              window.localStorage.setItem(`chatnode.lang.${config.id}`, next);
+            } catch {
+              // storage blocked: the choice still applies for this session
+            }
+          }}
+          className="ms-auto max-w-[7.5rem] cursor-pointer rounded-lg border border-neutral-200 bg-transparent px-1.5 py-1 text-xs text-neutral-500 outline-none focus:border-[var(--brand)] dark:border-neutral-700 dark:text-neutral-400"
+        >
+          {LOCALES.map((l) => (
+            <option key={l.code} value={l.code}>{l.label}</option>
+          ))}
+        </select>
         <button
           type="button"
-          aria-label="Minimize chat"
-          title="Minimize"
+          aria-label={t("minimize")}
+          title={t("minimize")}
           onClick={() => {
             if (onMinimize) return onMinimize();
             // Embedded in the loader's iframe: ask the parent to close the panel.
@@ -354,7 +387,7 @@ export default function Chat({
               window.parent.postMessage({ type: "chatnode:minimize" }, "*");
             }
           }}
-          className="ms-auto grid h-8 w-8 place-items-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
             <line x1="5" y1="12" x2="19" y2="12" />
@@ -365,7 +398,7 @@ export default function Chat({
       {!consented ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
           <p className="max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
-            {config.consentText || "By continuing, you agree to chat with this assistant."}
+            {config.consentText || t("consent")}
           </p>
           <button
             type="button"
@@ -385,27 +418,27 @@ export default function Chat({
       ) : !leadDone ? (
         <form onSubmit={submitLead} className="chat-scroll flex flex-1 flex-col gap-3 overflow-y-auto p-5">
           <div>
-            <p className="text-sm font-semibold">{config.leadTitle || "Let's get started"}</p>
+            <p className="text-sm font-semibold">{config.leadTitle || t("leadTitle")}</p>
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-              {config.leadSubtitle || "A few details so we can help you properly."}
+              {config.leadSubtitle || t("leadSubtitle")}
             </p>
           </div>
           {config.leadName && (
-            <input name="name" required autoComplete="name" placeholder="Name" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500" />
+            <input name="name" required autoComplete="name" placeholder={t("name")} className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500" />
           )}
           {config.leadEmail && (
-            <input name="email" type="email" required autoComplete="email" placeholder="Email" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500" />
+            <input name="email" type="email" required autoComplete="email" placeholder={t("email")} className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500" />
           )}
           {config.leadPhone && (
-            <input name="phone" type="tel" required autoComplete="tel" placeholder="Phone" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500" />
+            <input name="phone" type="tel" required autoComplete="tel" placeholder={t("phone")} className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500" />
           )}
           {config.leadMessage && (
-            <textarea name="message" required rows={3} placeholder="How can we help?" className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500 resize-none" />
+            <textarea name="message" required rows={3} placeholder={t("howCanWeHelp")} className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-[var(--brand)] dark:border-neutral-700 dark:bg-neutral-900 dark:placeholder:text-neutral-500 resize-none" />
           )}
           <Honeypot name="website" inputRef={leadTrapRef} checkRef={leadBotRef} />
           {leadError && <p className="text-xs text-red-500">{leadError}</p>}
           <button type="submit" disabled={leadBusy} className="mt-auto rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-[var(--brand-fg)] disabled:opacity-60">
-            {leadBusy ? "Starting..." : "Start chat"}
+            {leadBusy ? t("starting") : t("startChat")}
           </button>
         </form>
       ) : (
@@ -467,11 +500,11 @@ export default function Chat({
                     e.target.value = "";
                     if (!f) return;
                     if (f.size > config.maxFileSizeMb * 1024 * 1024) {
-                      setMessages((m) => [...m, { role: "notice", text: `File too large (max ${config.maxFileSizeMb}MB).` }]);
+                      setMessages((m) => [...m, { role: "notice", text: t("fileTooLarge", { mb: config.maxFileSizeMb }) }]);
                       return;
                     }
                     if (config.allowedFileTypes.length && !config.allowedFileTypes.includes(f.type)) {
-                      setMessages((m) => [...m, { role: "notice", text: "File type not allowed." }]);
+                      setMessages((m) => [...m, { role: "notice", text: t("fileTypeNotAllowed") }]);
                       return;
                     }
                     const reader = new FileReader();
@@ -479,7 +512,7 @@ export default function Chat({
                     reader.readAsDataURL(f);
                   }}
                 />
-                <button type="button" aria-label="Attach file" onClick={() => fileInputRef.current?.click()} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-neutral-200 text-neutral-500 transition-colors hover:border-[var(--brand)] dark:border-neutral-700">
+                <button type="button" aria-label={t("attachFile")} onClick={() => fileInputRef.current?.click()} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-neutral-200 text-neutral-500 transition-colors hover:border-[var(--brand)] dark:border-neutral-700">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -491,8 +524,8 @@ export default function Chat({
               rows={1}
               value={input}
               maxLength={4000}
-              placeholder="Type a message"
-              aria-label="Message"
+              placeholder={t("typeMessage")}
+              aria-label={t("messageLabel")}
               className="max-h-32 min-h-10 flex-1 resize-none rounded-xl border border-neutral-200 bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:text-neutral-500 focus:border-[var(--brand)] dark:border-neutral-700 dark:placeholder:text-neutral-400"
               onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
               onKeyDown={(e) => {

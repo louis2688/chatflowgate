@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { createBotAction, updateBotAction, deleteBotAction } from "@/app/(dash)/actions";
 import WebhookAuth from "./WebhookAuth";
@@ -55,10 +55,49 @@ const DEFAULT_PHONE = "iphone-14";
 const CUSTOM = { minW: 240, maxW: 1024, minH: 320, maxH: 1400 };
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
-// Half size, shrinking further only when a tall handset would outgrow the
-// preview column, so every device sits in the same visual budget.
-const FRAME_MAX_H = 460;
-const frameScale = (vp: Viewport) => Math.min(0.5, FRAME_MAX_H / vp.h);
+// Thickness of the drawn bezel on both axes (6px a side).
+const BEZEL = 12;
+
+// Biggest scale that still fits the measured column, never past 1: a handset
+// blown up beyond life size stops telling you anything useful about type. A
+// fixed fraction was the old behaviour and left the frame stranded at half
+// size on a wide monitor no matter how much room was going spare.
+function fitScale(box: { w: number; h: number }, vp: Viewport): number {
+  if (!box.w || !box.h) return 0.5; // pre-measurement first paint
+  return Math.min((box.w - BEZEL) / vp.w, (box.h - BEZEL) / vp.h, 1);
+}
+
+// Tracks a node's box. Measured three ways on purpose: once on mount for the
+// initial paint, on window resize, and via ResizeObserver for the cases a
+// window resize misses (the form column growing as fields are filled in).
+// The frame is always sized to fit inside what this reports, so growing the
+// frame can never grow the box being measured.
+function useBoxSize<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      // Bail when nothing moved: a ResizeObserver that setStates on every
+      // callback can otherwise re-enter itself and loop.
+      setBox((prev) => (Math.abs(prev.w - r.width) < 0.5 && Math.abs(prev.h - r.height) < 0.5 ? prev : { w: r.width, h: r.height }));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(measure);
+      ro.observe(el);
+    }
+    return () => {
+      window.removeEventListener("resize", measure);
+      ro?.disconnect();
+    };
+  }, []);
+  return [ref, box] as const;
+}
 
 // Below this width embed.js drops the floating panel and goes fullscreen, so
 // Width/Height stop applying entirely. Keep in sync with MOBILE_MAX there.
@@ -164,9 +203,10 @@ function ChatWindow({ s, onMinimize }: { s: PreviewState; onMinimize?: () => voi
 }
 
 function PhoneFrame({ vp, children }: { vp: Viewport; children: React.ReactNode }) {
-  const k = frameScale(vp);
+  const [boxRef, box] = useBoxSize<HTMLDivElement>();
+  const k = fitScale(box, vp);
   return (
-    <div className="grid h-full w-full place-items-center">
+    <div ref={boxRef} className="grid h-full w-full place-items-center overflow-hidden">
       <div
         className="overflow-hidden rounded-[1.75rem] border-[6px] border-neutral-800 bg-white shadow-xl dark:border-neutral-600 dark:bg-neutral-900"
         // content-box so the bezel sits outside the viewport: with the default

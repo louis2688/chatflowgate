@@ -174,7 +174,14 @@ function PhoneFrame({ vp, children }: { vp: Viewport; children: React.ReactNode 
         // against, and a correctly-sized panel gets clipped by max-w-full.
         style={{ width: vp.w * k, height: vp.h * k, boxSizing: "content-box" }}
       >
-        {children}
+        {/* Contents are laid out at the handset's real pixel size and the whole
+            thing is then scaled down. Sizing the boxes directly instead would
+            leave everything inside them -- type, padding, the input row, the
+            send button -- rendering at 1:1 inside a half-size phone, so a 14px
+            message would read like 28px on the device. */}
+        <div style={{ width: vp.w, height: vp.h, transform: `scale(${k})`, transformOrigin: "top left" }}>
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -182,7 +189,6 @@ function PhoneFrame({ vp, children }: { vp: Viewport; children: React.ReactNode 
 
 function Preview({ s, open, setOpen, device, vp }: { s: PreviewState; open: boolean; setOpen: (v: boolean) => void; device: Device; vp: Viewport }) {
   const mobile = device === "mobile";
-  const k = frameScale(vp);
   if (s.widgetType === "inline") {
     const inline = <div className="h-full w-full p-2"><ChatWindow s={s} /></div>;
     return mobile ? <PhoneFrame vp={vp}>{inline}</PhoneFrame> : inline;
@@ -195,21 +201,21 @@ function Preview({ s, open, setOpen, device, vp }: { s: PreviewState; open: bool
   };
   const colReverse = s.position.startsWith("top") ? "flex-col-reverse" : "flex-col";
   const clusterAlign = s.position.endsWith("right") ? "items-end" : "items-start";
-  // Desktop previews at a flat 0.6. Mobile applies the same clamp embed.js
-  // does before scaling, so an oversized panel visibly hits the phone edges
-  // here exactly as it would on a real handset.
+  // Mobile is measured in real device pixels: PhoneFrame scales the finished
+  // layout down as one piece, so nothing here multiplies by k. Desktop has no
+  // such wrapper and still previews at a flat 0.6.
   const fit = clampedPanel(vp, s.widgetWidth, s.widgetHeight);
   // On a phone the panel is the whole screen: Width and Height do not apply.
   const full = mobile && isFullscreen(vp);
   const panel = !mobile
     ? { width: s.widgetWidth * 0.6, height: s.widgetHeight * 0.6 }
     : full
-      ? { width: vp.w * k, height: vp.h * k }
-      : { width: fit.w * k, height: fit.h * k };
-  // embed.js draws a 56px launcher inset 20px from the edges; both scale with
-  // the frame so the cluster keeps its real proportions on every device.
-  const dot = mobile ? Math.round(56 * k) : 48;
-  const pad = mobile ? 20 * k : undefined;
+      ? { width: vp.w, height: vp.h }
+      : { width: fit.w, height: fit.h };
+  // The real launcher: 56px across, inset 20px. Both are true device pixels
+  // now, so the cluster keeps its actual proportions on every handset.
+  const dot = mobile ? 56 : 48;
+  const pad = mobile ? 20 : undefined;
   const stage = (
     <div className={`flex h-full w-full bg-white dark:bg-neutral-900 ${mobile ? "" : "rounded-xl p-6 shadow-inner"} ${align[s.position]}`} style={mobile ? { padding: full && open ? 0 : pad } : undefined}>
       <div className={`flex ${colReverse} ${clusterAlign} gap-2 ${full && open ? "h-full w-full" : ""}`}>
@@ -218,7 +224,7 @@ function Preview({ s, open, setOpen, device, vp }: { s: PreviewState; open: bool
             <ChatWindow s={s} onMinimize={full ? () => setOpen(false) : undefined} />
           </div>
         ) : (
-          <div className={`rounded-xl border border-neutral-200 bg-white px-3 py-2 text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 ${mobile ? "max-w-[140px] text-[10px] leading-snug" : "max-w-[180px] text-xs"}`}>
+          <div className="max-w-[180px] rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
             {s.greeting || s.welcome || "Hi! How can I help?"}
           </div>
         )}
@@ -232,8 +238,8 @@ function Preview({ s, open, setOpen, device, vp }: { s: PreviewState; open: bool
             style={{ background: s.color, height: dot, width: !open && s.buttonText ? undefined : dot }}
             aria-label={s.buttonText || "Open chat"}
           >
-            {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, mobile ? 14 : 22) : BotGlyph(mobile ? 14 : 22)}
-            {!open && s.buttonText && <span className={mobile ? "text-[10px] font-medium" : "text-sm font-medium"}>{s.buttonText}</span>}
+            {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, 22) : BotGlyph(22)}
+            {!open && s.buttonText && <span className="text-sm font-medium">{s.buttonText}</span>}
           </button>
         )}
       </div>

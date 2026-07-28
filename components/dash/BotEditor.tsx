@@ -34,6 +34,9 @@ const PHONE_W = 375;
 const PHONE_H = 812;
 const PHONE_SCALE = 0.5;
 
+// The delete form is rendered outside the edit form and reached by this id.
+const DELETE_FORM_ID = "delete-bot-form";
+
 const POSITIONS = [
   ["bottom-right", "Bottom right"],
   ["bottom-left", "Bottom left"],
@@ -343,6 +346,25 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                 {s.geoMode === "off" && <input type="hidden" name="geoCountries" value={(bot?.geoCountries ?? []).join("\n")} />}
               </div>
               <WebhookAuth defaultType={(bot?.webhookAuthType as "none" | "basic" | "header") ?? "none"} defaultName={bot?.webhookAuthHeader ?? ""} defaultValue={bot?.webhookAuthValue ?? ""} />
+              {editing && (
+                <details className="rounded-lg border border-red-200 p-3 dark:border-red-900/40">
+                  <summary className="cursor-pointer text-sm font-medium text-red-700 dark:text-red-300">Danger zone</summary>
+                  <p className="mt-2 text-xs text-neutral-500">Deletes the bot and every setting on it. Any site still embedding it stops working. This cannot be undone.</p>
+                  {/* Targets the delete form rendered after the edit form via form=.
+                      A <form> cannot be nested inside another: the parser drops the
+                      inner one, and this button would then submit the edit form --
+                      silently saving the bot instead of deleting it. No spinner
+                      because useFormStatus reads the nearest enclosing form, which
+                      is the edit form, not the one this actually submits. */}
+                  <button
+                    type="submit"
+                    form={DELETE_FORM_ID}
+                    className="mt-3 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20"
+                  >
+                    Delete bot
+                  </button>
+                </details>
+              )}
             </div>
 
             <div hidden={tab !== "appearance"} className="space-y-4 p-5">
@@ -517,15 +539,13 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
         </div>
       </ActionForm>
 
+      {/* Deliberately a sibling of the edit form, not a child: nested forms are
+          invalid HTML. Renders nothing -- its only control is the Delete bot
+          button in the Settings tab, wired here by form={DELETE_FORM_ID}. */}
       {editing && (
-        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/10">
-          <h2 className="font-semibold text-red-700 dark:text-red-300">Danger zone</h2>
-          <p className="mb-3 mt-1 text-sm text-neutral-600 dark:text-neutral-400">Deletes the bot. This cannot be undone.</p>
-          <ActionForm action={deleteBotAction}>
-            <input type="hidden" name="botId" value={bot!.id} />
-            <SubmitButton pendingLabel="Deleting..." className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20">Delete bot</SubmitButton>
-          </ActionForm>
-        </div>
+        <ActionForm action={deleteBotAction} id={DELETE_FORM_ID}>
+          <input type="hidden" name="botId" value={bot!.id} />
+        </ActionForm>
       )}
     </div>
   );

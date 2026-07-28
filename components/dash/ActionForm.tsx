@@ -15,11 +15,15 @@ export default function ActionForm({
   children,
   className,
   onSuccess,
+  id,
 }: {
   action: (prev: ActionResult, formData: FormData) => Promise<ActionResult>;
   children: React.ReactNode;
   className?: string;
   onSuccess?: () => void;
+  // Lets a submit button elsewhere in the document target this form via the
+  // HTML form= attribute, for controls that cannot be nested inside it.
+  id?: string;
 }) {
   const [state, formAction] = useActionState(action, null);
   const { toast } = useToast();
@@ -34,7 +38,7 @@ export default function ActionForm({
   }, [state, toast]);
 
   return (
-    <form action={formAction} className={className}>
+    <form id={id} action={formAction} className={className}>
       {children}
     </form>
   );

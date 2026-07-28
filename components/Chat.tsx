@@ -139,7 +139,10 @@ export default function Chat({
     // Remembered language, per bot so two widgets on one site stay independent.
     try {
       const saved = window.localStorage.getItem(`chatnode.lang.${config.id}`);
+      // The visitor's own choice beats the owner's default; the default only
+      // decides what a first-time visitor lands on.
       if (isLocale(saved)) setLocale(saved);
+      else if (isLocale(config.locale)) setLocale(config.locale);
     } catch {
       // storage blocked (private mode, third-party cookie rules): stay on English
     }

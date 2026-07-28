@@ -156,6 +156,10 @@ export const bot = pgTable("bot", {
   geoCountries: jsonb("geoCountries").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
   ratePerSession: integer("ratePerSession").notNull().default(20),
   ratePerIp: integer("ratePerIp").notNull().default(60),
+  // Language the widget opens in. A visitor can still switch with the picker and
+  // their choice wins for that browser; this is only the starting point, so a
+  // customer selling into one market is not stuck greeting everyone in English.
+  locale: text("locale").notNull().default("en"),
   rtl: boolean("rtl").notNull().default(false),
   customCss: text("customCss"),
   consentRequired: boolean("consentRequired").notNull().default(false),

@@ -9,6 +9,7 @@ import ActionForm from "./ActionForm";
 import SubmitButton from "./SubmitButton";
 import type { Bot } from "@/lib/bots";
 import { readableText } from "@/lib/contrast";
+import { LOCALES, DEFAULT_LOCALE, localeDir, t as tr } from "@/lib/i18n";
 
 const field =
   "w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/60 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-emerald-500";
@@ -137,6 +138,7 @@ type PreviewState = {
   widgetWidth: number;
   widgetHeight: number;
   allowFileUpload: boolean;
+  locale: string;
 };
 
 function Avatar({ logoUrl, color, fg, name }: { logoUrl: string; color: string; fg: string; name: string }) {
@@ -154,14 +156,14 @@ function Avatar({ logoUrl, color, fg, name }: { logoUrl: string; color: string; 
 function ChatWindow({ s, onMinimize }: { s: PreviewState; onMinimize?: () => void }) {
   const fg = readableText(s.color);
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
+    <div dir={localeDir(s.locale)} className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
       <div className="flex items-center gap-3 border-b border-neutral-100 px-4 py-3 dark:border-neutral-800/60">
         <Avatar logoUrl={s.logoUrl} color={s.color} fg={fg} name={s.name} />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{s.name || "Bot"}</p>
           <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-            Online
+            {tr(s.locale, "online")}
           </p>
         </div>
         {/* Inert decoration normally, but live when the caller passes a handler:
@@ -203,7 +205,7 @@ function ChatWindow({ s, onMinimize }: { s: PreviewState; onMinimize?: () => voi
             <Clip />
           </div>
         )}
-        <div className="min-h-10 flex-1 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">Type a message</div>
+        <div className="min-h-10 flex-1 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">{tr(s.locale, "typeMessage")}</div>
         <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl" style={{ background: s.color, color: fg }}><Send /></div>
       </div>
     </div>
@@ -323,6 +325,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     widgetWidth: bot?.widgetWidth ?? 400,
     widgetHeight: bot?.widgetHeight ?? 640,
     allowFileUpload: bot?.allowFileUpload ?? false,
+    locale: bot?.locale ?? DEFAULT_LOCALE,
     allowAnonymous: bot ? bot.allowAnonymous : true,
     geoMode: (bot?.geoMode as "off" | "allow" | "block") ?? "off",
   });
@@ -511,6 +514,24 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                   <input name="color" value={s.color} onChange={(e) => set({ color: e.target.value })} className={field} />
                 </div>
               </div>
+              <div>
+                <label className={label} htmlFor="locale">Default language</label>
+                <select
+                  id="locale"
+                  name="locale"
+                  value={s.locale}
+                  onChange={(e) => { set({ locale: e.target.value }); setPreviewOpen(true); }}
+                  className={field}
+                >
+                  {LOCALES.map((l) => (
+                    <option key={l.code} value={l.code}>{l.label}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-neutral-500">
+                  The language the widget opens in. Visitors can still switch with the picker in the chat header, and
+                  right-to-left languages flip the layout on their own.
+                </p>
+              </div>
               <input type="hidden" name="widgetType" value={s.widgetType} />
               <div>
                 <label className={label}>Type</label>
@@ -601,7 +622,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                 <summary className="cursor-pointer text-sm text-neutral-700 dark:text-neutral-300">Advanced</summary>
                 <div className="mt-3 space-y-3">
                   <div className="flex flex-wrap gap-4">
-                    <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="rtl" defaultChecked={bot?.rtl ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> RTL layout</label>
+                    <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="rtl" defaultChecked={bot?.rtl ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> Force RTL layout</label>
                     <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="consentRequired" defaultChecked={bot?.consentRequired ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> Consent screen</label>
                     <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300"><input type="checkbox" name="allowFileUpload" checked={s.allowFileUpload} onChange={(e) => { set({ allowFileUpload: e.target.checked }); setPreviewOpen(true); }} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600" /> File upload</label>
                   </div>

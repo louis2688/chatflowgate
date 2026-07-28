@@ -10,6 +10,7 @@ import { createBot, deleteBot, updateBot } from "@/lib/bots";
 import { createApiKey, revokeApiKey } from "@/lib/apikeys";
 import { PACKAGES, addCredits } from "@/lib/credits";
 import { PLANS, planOf, type PlanId } from "@/lib/plans";
+import { isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 import { appBaseUrl, ensureStripeCustomer, packageProductId, planPriceId, stripe, stripeEnabled } from "@/lib/stripe";
 import { addIpBan, removeIpBan } from "@/lib/ipbans";
 import { assertHttpUrl } from "@/lib/ssrf";
@@ -77,6 +78,10 @@ function botValues(formData: FormData, p: z.infer<typeof botSchema>) {
       .filter((c) => /^[A-Z]{2}$/.test(c)),
     ratePerSession: p.ratePerSession,
     ratePerIp: p.ratePerIp,
+    // Validated against the shipped list rather than trusted: this is a form
+    // field, and an unknown code would leave every string falling back to
+    // English with no clue why.
+    locale: isLocale(String(formData.get("locale") ?? "")) ? String(formData.get("locale")) : DEFAULT_LOCALE,
     rtl: formData.get("rtl") === "on",
     consentRequired: formData.get("consentRequired") === "on",
     consentText: p.consentText || null,

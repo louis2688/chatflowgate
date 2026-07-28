@@ -54,7 +54,9 @@ function Section({ id, title, soon, children }: { id: string; title: string; soo
 
 export default function DocsPage() {
   return (
-    <div className="space-y-6">
+    // Its own reading width: the shell is sized for the bot editor, and prose
+    // set to 1600px is a miserable line length.
+    <div className="mx-auto max-w-5xl space-y-6">
       <div>
         <h1 className="font-display text-2xl font-semibold">Documentation</h1>
         <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">

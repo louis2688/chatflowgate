@@ -378,7 +378,14 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
           </div>
         )}
 
-        <div className="grid rounded-b-xl border border-t-0 border-neutral-200 dark:border-neutral-800 lg:grid-cols-[minmax(0,380px)_1fr]">
+        {/* Spare width goes to the form, not the preview. The old
+            [380px_1fr] pinned the form and handed every extra pixel to the
+            preview column, which cannot use it: the phone stops growing at
+            life size, so the surplus became empty gutter either side of it.
+            The preview column is bounded rather than content-sized because the
+            frame measures this column to pick its scale -- sizing the column to
+            the frame instead would be circular. */}
+        <div className="grid rounded-b-xl border border-t-0 border-neutral-200 dark:border-neutral-800 lg:grid-cols-[minmax(380px,1fr)_minmax(0,560px)]">
           <div className="flex flex-col border-b border-neutral-200 dark:border-neutral-800 lg:border-b-0 lg:border-r">
             <div className="flex border-b border-neutral-200 dark:border-neutral-800">
               {tabBtn("settings", "Settings")}

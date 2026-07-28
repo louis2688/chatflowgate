@@ -60,7 +60,12 @@ export default function DashShell({
           </div>
         </div>
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="mx-auto max-w-5xl px-6 py-8">{children}</div>
+          {/* Wide enough that a normal laptop or desktop window is filled rather
+              than letterboxed -- the bot editor is a two column form plus a
+              live preview and was losing 200px a side to the old 5xl cap. Still
+              capped so an ultrawide does not stretch a form to 3000px. Pages
+              whose content is prose set their own reading width. */}
+          <div className="mx-auto max-w-[1600px] px-6 py-8">{children}</div>
         </div>
       </main>
     </div>

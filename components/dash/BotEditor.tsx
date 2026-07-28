@@ -20,6 +20,19 @@ const svg = (children: React.ReactNode, size = 16) => (
 const BotGlyph = (s?: number) => svg(<><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /><line x1="8" y1="16" x2="8.01" y2="16" /><line x1="16" y1="16" x2="16.01" y2="16" /></>, s);
 const Minus = () => svg(<line x1="5" y1="12" x2="19" y2="12" />, 16);
 const Send = () => svg(<><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></>, 14);
+const Monitor = () => svg(<><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>, 16);
+const Phone = () => svg(<><rect x="7" y="2" width="10" height="20" rx="2" /><line x1="11" y1="18.5" x2="13" y2="18.5" /></>, 16);
+
+type Device = "desktop" | "mobile";
+
+// The phone the mobile preview stands in for. embed.js clamps the panel to
+// min(width, 100vw - 40px) and min(height, 100dvh - 120px), so a 400px widget
+// is really 335px on a 375px handset. Showing that clamp is the whole point of
+// the toggle: without it someone picks 600px, it looks fine here, and it is
+// silently squashed on every phone that loads the site.
+const PHONE_W = 375;
+const PHONE_H = 812;
+const PHONE_SCALE = 0.5;
 
 const POSITIONS = [
   ["bottom-right", "Bottom right"],
@@ -97,9 +110,27 @@ function ChatWindow({ s }: { s: PreviewState }) {
   );
 }
 
-function Preview({ s, open, setOpen }: { s: PreviewState; open: boolean; setOpen: (v: boolean) => void }) {
+function PhoneFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid h-full w-full place-items-center">
+      <div
+        className="overflow-hidden rounded-[1.75rem] border-[6px] border-neutral-800 bg-white shadow-xl dark:border-neutral-600 dark:bg-neutral-900"
+        // content-box so the bezel sits outside the viewport: with the default
+        // border-box the 6px border eats into the 375px the panel is measured
+        // against, and a correctly-sized panel gets clipped by max-w-full.
+        style={{ width: PHONE_W * PHONE_SCALE, height: PHONE_H * PHONE_SCALE, boxSizing: "content-box" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Preview({ s, open, setOpen, device }: { s: PreviewState; open: boolean; setOpen: (v: boolean) => void; device: Device }) {
+  const mobile = device === "mobile";
   if (s.widgetType === "inline") {
-    return <div className="h-full w-full p-2"><ChatWindow s={s} /></div>;
+    const inline = <div className="h-full w-full p-2"><ChatWindow s={s} /></div>;
+    return mobile ? <PhoneFrame>{inline}</PhoneFrame> : inline;
   }
   const align: Record<string, string> = {
     "bottom-right": "items-end justify-end",
@@ -109,34 +140,39 @@ function Preview({ s, open, setOpen }: { s: PreviewState; open: boolean; setOpen
   };
   const colReverse = s.position.startsWith("top") ? "flex-col-reverse" : "flex-col";
   const clusterAlign = s.position.endsWith("right") ? "items-end" : "items-start";
-  return (
-    <div className={`flex h-full w-full rounded-xl bg-white p-6 shadow-inner dark:bg-neutral-900 ${align[s.position]}`}>
+  // Desktop previews at a flat 0.6. Mobile applies the same clamp embed.js
+  // does before scaling, so an oversized panel visibly hits the phone edges
+  // here exactly as it would on a real handset.
+  const panel = mobile
+    ? { width: Math.min(s.widgetWidth, PHONE_W - 40) * PHONE_SCALE, height: Math.min(s.widgetHeight, PHONE_H - 120) * PHONE_SCALE }
+    : { width: s.widgetWidth * 0.6, height: s.widgetHeight * 0.6 };
+  const dot = mobile ? 28 : 48;
+  const stage = (
+    <div className={`flex h-full w-full bg-white dark:bg-neutral-900 ${mobile ? "p-2.5" : "rounded-xl p-6 shadow-inner"} ${align[s.position]}`}>
       <div className={`flex ${colReverse} ${clusterAlign} gap-2`}>
         {open ? (
-          <div
-            className="max-h-full max-w-full overflow-hidden rounded-xl shadow-xl"
-            style={{ width: s.widgetWidth * 0.6, height: s.widgetHeight * 0.6 }}
-          >
+          <div className="max-h-full max-w-full overflow-hidden rounded-xl shadow-xl" style={panel}>
             <ChatWindow s={s} />
           </div>
         ) : (
-          <div className="max-w-[180px] rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+          <div className={`rounded-xl border border-neutral-200 bg-white px-3 py-2 text-neutral-700 shadow-md dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 ${mobile ? "max-w-[140px] text-[10px] leading-snug" : "max-w-[180px] text-xs"}`}>
             {s.greeting || s.welcome || "Hi! How can I help?"}
           </div>
         )}
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`flex h-12 flex-shrink-0 items-center justify-center gap-2 rounded-full text-white shadow-lg ${!open && s.buttonText ? "px-4" : "w-12"}`}
-          style={{ background: s.color }}
+          className={`flex flex-shrink-0 items-center justify-center gap-2 rounded-full text-white shadow-lg ${!open && s.buttonText ? "px-4" : ""}`}
+          style={{ background: s.color, height: dot, width: !open && s.buttonText ? undefined : dot }}
           aria-label={s.buttonText || "Open chat"}
         >
-          {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, 22) : BotGlyph(22)}
-          {!open && s.buttonText && <span className="text-sm font-medium">{s.buttonText}</span>}
+          {open ? svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>, mobile ? 14 : 22) : BotGlyph(mobile ? 14 : 22)}
+          {!open && s.buttonText && <span className={mobile ? "text-[10px] font-medium" : "text-sm font-medium"}>{s.buttonText}</span>}
         </button>
       </div>
     </div>
   );
+  return mobile ? <PhoneFrame>{stage}</PhoneFrame> : stage;
 }
 
 export default function BotEditor({ bot }: { bot?: Bot }) {
@@ -144,6 +180,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
   const [tab, setTab] = useState<"settings" | "appearance">("settings");
   const [showEmbed, setShowEmbed] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [device, setDevice] = useState<Device>("desktop");
   const [s, setS] = useState<PreviewState & { allowAnonymous: boolean; geoMode: "off" | "allow" | "block" }>({
     name: bot?.name ?? "",
     welcome: bot?.welcome ?? "Hi! How can I help you today?",
@@ -442,8 +479,40 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
             </div>
           </div>
 
-          <div className="min-h-[420px] bg-neutral-100 p-4 dark:bg-neutral-950/40 lg:min-h-[560px]">
-            <Preview s={s} open={previewOpen} setOpen={setPreviewOpen} />
+          <div className="flex min-h-[420px] flex-col bg-neutral-100 p-4 dark:bg-neutral-950/40 lg:min-h-[560px]">
+            {/* type="button" on all three: this sits inside the edit form, and a
+                bare button in a form submits it. */}
+            <div className="mb-3 flex items-center justify-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDevice("desktop")}
+                aria-label="Preview at desktop width"
+                className={device === "desktop" ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"}
+              >
+                <Monitor />
+              </button>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={device === "mobile"}
+                aria-label="Preview on a phone"
+                onClick={() => setDevice(device === "mobile" ? "desktop" : "mobile")}
+                className="relative h-5 w-9 flex-shrink-0 rounded-full bg-neutral-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-neutral-700"
+              >
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${device === "mobile" ? "left-[1.125rem]" : "left-0.5"}`} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevice("mobile")}
+                aria-label="Preview on a phone"
+                className={device === "mobile" ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"}
+              >
+                <Phone />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <Preview s={s} open={previewOpen} setOpen={setPreviewOpen} device={device} />
+            </div>
           </div>
         </div>
       </ActionForm>

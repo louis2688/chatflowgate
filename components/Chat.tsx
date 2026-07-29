@@ -5,6 +5,15 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 import type { PublicBotConfig } from "@/lib/bots";
 import { LOCALES, DEFAULT_LOCALE, isLocale, localeDir, t as tr, type Locale } from "@/lib/i18n";
+import { US, CN, ES as EsFlag, JP, DE as DeFlag, SA, FR as FrFlag, BR, KR, IN } from "country-flag-icons/react/3x2";
+
+// A language is not a country, so these are a best-effort stand-in rather than
+// a fact: Arabic spans two dozen states (SA is arbitrary), Portuguese is mostly
+// Brazil rather than Portugal, and English is not owned by the US. Chosen for
+// recognisability, not correctness.
+const FLAG: Record<string, React.ComponentType<{ className?: string }>> = {
+  en: US, zh: CN, es: EsFlag, ja: JP, de: DeFlag, ar: SA, fr: FrFlag, pt: BR, ko: KR, hi: IN,
+};
 
 type Msg = { role: "user" | "bot" | "notice"; text: string };
 
@@ -358,26 +367,45 @@ export default function Chat({
             {t("online")}
           </p>
         </div>
-        <select
-          value={locale}
-          aria-label={t("language")}
-          title={t("language")}
-          onChange={(e) => {
-            const next = e.target.value;
-            if (!isLocale(next)) return;
-            setLocale(next);
-            try {
-              window.localStorage.setItem(`chatnode.lang.${config.id}`, next);
-            } catch {
-              // storage blocked: the choice still applies for this session
-            }
-          }}
-          className="ms-auto max-w-[7.5rem] cursor-pointer rounded-lg border border-neutral-200 bg-transparent px-1.5 py-1 text-xs text-neutral-500 outline-none focus:border-[var(--brand)] dark:border-neutral-700 dark:text-neutral-400"
-        >
-          {LOCALES.map((l) => (
-            <option key={l.code} value={l.code}>{l.label}</option>
-          ))}
-        </select>
+        {/* A real <select> kept underneath at zero opacity, with a compact pill
+            drawn on top: the collapsed control is just a globe and the code, but
+            the open list is still the browser's own, showing full native names
+            and giving keyboard, screen reader and mobile pickers for free.
+            A globe rather than flags -- flag emoji do not render at all on
+            Windows, and a language is not a country anyway (Arabic spans two
+            dozen of them, Portuguese is mostly Brazil). */}
+        <div className="relative ms-auto shrink-0">
+          <span
+            aria-hidden
+            className="pointer-events-none flex items-center gap-1 rounded-lg border border-neutral-200 px-1.5 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:border-neutral-700 dark:text-neutral-400"
+          >
+            {(() => {
+              const F = FLAG[locale];
+              return F ? <F className="h-3 w-[18px] shrink-0 rounded-[2px]" /> : null;
+            })()}
+            {locale}
+          </span>
+          <select
+            value={locale}
+            aria-label={t("language")}
+            title={t("language")}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (!isLocale(next)) return;
+              setLocale(next);
+              try {
+                window.localStorage.setItem(`chatnode.lang.${config.id}`, next);
+              } catch {
+                // storage blocked: the choice still applies for this session
+              }
+            }}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          >
+            {LOCALES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
+        </div>
         <button
           type="button"
           aria-label={t("minimize")}

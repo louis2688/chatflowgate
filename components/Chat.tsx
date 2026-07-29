@@ -399,10 +399,14 @@ export default function Chat({
                 // storage blocked: the choice still applies for this session
               }
             }}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            // The select is invisible, but the browser paints the native option
+            // list from its computed colours. Inheriting the header's near-white
+            // dark-mode text onto a default-white popup made the list unreadable,
+            // so both the colours and the scheme are stated outright here.
+            className="absolute inset-0 h-full w-full cursor-pointer text-neutral-900 opacity-0 [color-scheme:light] dark:text-neutral-100 dark:[color-scheme:dark]"
           >
             {LOCALES.map((l) => (
-              <option key={l.code} value={l.code}>{l.label}</option>
+              <option key={l.code} value={l.code} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">{l.label}</option>
             ))}
           </select>
         </div>

@@ -82,6 +82,7 @@ function botValues(formData: FormData, p: z.infer<typeof botSchema>) {
     // field, and an unknown code would leave every string falling back to
     // English with no clue why.
     locale: isLocale(String(formData.get("locale") ?? "")) ? String(formData.get("locale")) : DEFAULT_LOCALE,
+    hideLanguagePicker: formData.get("hideLanguagePicker") === "on",
     rtl: formData.get("rtl") === "on",
     consentRequired: formData.get("consentRequired") === "on",
     consentText: p.consentText || null,

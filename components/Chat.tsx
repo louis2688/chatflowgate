@@ -374,7 +374,11 @@ export default function Chat({
             A globe rather than flags -- flag emoji do not render at all on
             Windows, and a language is not a country anyway (Arabic spans two
             dozen of them, Portuguese is mostly Brazil). */}
-        <div className="relative ms-auto shrink-0">
+        {/* One wrapper owns the push-right, so hiding the picker does not leave
+            the minimize button stranded next to the bot name. */}
+        <div className="ms-auto flex shrink-0 items-center gap-2">
+        {!config.hideLanguagePicker && (
+        <div className="relative shrink-0">
           <span
             aria-hidden
             className="pointer-events-none flex items-center gap-1 rounded-lg border border-neutral-200 px-1.5 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:border-neutral-700 dark:text-neutral-400"
@@ -410,6 +414,7 @@ export default function Chat({
             ))}
           </select>
         </div>
+        )}
         <button
           type="button"
           aria-label={t("minimize")}
@@ -428,6 +433,7 @@ export default function Chat({
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </button>
+        </div>
       </header>
 
       {!consented ? (

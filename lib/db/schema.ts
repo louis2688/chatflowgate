@@ -160,6 +160,10 @@ export const bot = pgTable("bot", {
   // their choice wins for that browser; this is only the starting point, so a
   // customer selling into one market is not stuck greeting everyone in English.
   locale: text("locale").notNull().default("en"),
+  // Owners running a single-language site do not want a picker inviting people
+  // to switch. Hiding it does not pin the language: the visitor's saved choice
+  // still wins, they just cannot change it from here any more.
+  hideLanguagePicker: boolean("hideLanguagePicker").notNull().default(false),
   rtl: boolean("rtl").notNull().default(false),
   customCss: text("customCss"),
   consentRequired: boolean("consentRequired").notNull().default(false),

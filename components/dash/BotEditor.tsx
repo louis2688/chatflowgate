@@ -139,6 +139,7 @@ type PreviewState = {
   widgetHeight: number;
   allowFileUpload: boolean;
   locale: string;
+  hideLanguagePicker: boolean;
 };
 
 function Avatar({ logoUrl, color, fg, name }: { logoUrl: string; color: string; fg: string; name: string }) {
@@ -326,6 +327,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
     widgetHeight: bot?.widgetHeight ?? 640,
     allowFileUpload: bot?.allowFileUpload ?? false,
     locale: bot?.locale ?? DEFAULT_LOCALE,
+    hideLanguagePicker: bot?.hideLanguagePicker ?? false,
     allowAnonymous: bot ? bot.allowAnonymous : true,
     geoMode: (bot?.geoMode as "off" | "allow" | "block") ?? "off",
   });
@@ -484,7 +486,37 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                 )}
                 {s.geoMode === "off" && <input type="hidden" name="geoCountries" value={(bot?.geoCountries ?? []).join("\n")} />}
               </div>
-              <WebhookAuth defaultType={(bot?.webhookAuthType as "none" | "basic" | "header") ?? "none"} defaultName={bot?.webhookAuthHeader ?? ""} defaultValue={bot?.webhookAuthValue ?? ""} />
+              <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+                <label className={label} htmlFor="locale">Language</label>
+                <select
+                  id="locale"
+                  name="locale"
+                  value={s.locale}
+                  onChange={(e) => { set({ locale: e.target.value }); setPreviewOpen(true); }}
+                  className={field}
+                >
+                  {LOCALES.map((l) => (
+                    <option key={l.code} value={l.code}>{l.label}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-neutral-500">
+                  The language the widget opens in. Right-to-left languages flip the layout on their own.
+                </p>
+                <label className="mt-3 flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                  <input
+                    type="checkbox"
+                    name="hideLanguagePicker"
+                    checked={s.hideLanguagePicker}
+                    onChange={(e) => { set({ hideLanguagePicker: e.target.checked }); setPreviewOpen(true); }}
+                    className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600"
+                  />
+                  Hide language selector
+                </label>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Removes the picker from the chat header, so visitors stay on the language above. Anyone who already
+                  chose a language on this site keeps it.
+                </p>
+              </div>              <WebhookAuth defaultType={(bot?.webhookAuthType as "none" | "basic" | "header") ?? "none"} defaultName={bot?.webhookAuthHeader ?? ""} defaultValue={bot?.webhookAuthValue ?? ""} />
               {editing && (
                 <details className="rounded-lg border border-red-200 p-3 dark:border-red-900/40">
                   <summary className="cursor-pointer text-sm font-medium text-red-700 dark:text-red-300">Danger zone</summary>
@@ -513,24 +545,6 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
                   <input type="color" value={s.color} onChange={(e) => set({ color: e.target.value })} className="h-9 w-10 rounded border border-neutral-300 dark:border-neutral-700" aria-label="Brand color picker" />
                   <input name="color" value={s.color} onChange={(e) => set({ color: e.target.value })} className={field} />
                 </div>
-              </div>
-              <div>
-                <label className={label} htmlFor="locale">Default language</label>
-                <select
-                  id="locale"
-                  name="locale"
-                  value={s.locale}
-                  onChange={(e) => { set({ locale: e.target.value }); setPreviewOpen(true); }}
-                  className={field}
-                >
-                  {LOCALES.map((l) => (
-                    <option key={l.code} value={l.code}>{l.label}</option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-neutral-500">
-                  The language the widget opens in. Visitors can still switch with the picker in the chat header, and
-                  right-to-left languages flip the layout on their own.
-                </p>
               </div>
               <input type="hidden" name="widgetType" value={s.widgetType} />
               <div>

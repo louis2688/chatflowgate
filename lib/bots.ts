@@ -21,6 +21,7 @@ export type PublicBotConfig = {
   leadPhone: boolean;
   leadMessage: boolean;
   locale: string;
+  hideLanguagePicker: boolean;
   rtl: boolean;
   consentRequired: boolean;
   consentText: string | null;
@@ -78,6 +79,7 @@ export function publicConfig(b: Bot): PublicBotConfig {
     leadPhone: b.leadPhone,
     leadMessage: b.leadMessage,
     locale: b.locale,
+    hideLanguagePicker: b.hideLanguagePicker,
     rtl: b.rtl,
     consentRequired: b.consentRequired,
     consentText: b.consentText,

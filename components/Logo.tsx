@@ -4,9 +4,9 @@ const W = 1028;
 const H = 267;
 
 /**
- * The wordmark is two-tone: "Chat" is brand blue, "Layer" is dark charcoal. The
- * charcoal half vanishes on a dark background, so there is a second file with
- * that half recoloured light.
+ * The wordmark is two-tone: "Gate" is brand blue, "Flow" and the shield are
+ * neutral. The neutral half has to invert per surface -- charcoal on light,
+ * white on dark -- so there are two files rather than one.
  *
  * Surfaces that follow the theme (the dashboard) render both and let CSS pick.
  * Pages that are always dark regardless of theme (landing, login, signup, docs)
@@ -24,14 +24,14 @@ export default function Logo({
 }) {
   if (onDark) {
     return (
-      <Image src="/logo-dark.png" alt="Chatnode" width={W} height={H} priority={priority} className={className} />
+      <Image src="/logo-dark.png" alt="FlowGate" width={W} height={H} priority={priority} className={className} />
     );
   }
   return (
     <>
       <Image
         src="/logo.png"
-        alt="Chatnode"
+        alt="FlowGate"
         width={W}
         height={H}
         priority={priority}

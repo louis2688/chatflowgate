@@ -1,7 +1,9 @@
 import Image from "next/image";
 
-const W = 1028;
-const H = 267;
+// Intrinsic size of the supplied artwork. next/image needs the real ratio or
+// it reserves the wrong space and the lockup renders squashed.
+const W = 1221;
+const H = 340;
 
 /**
  * The wordmark is two-tone: "Gate" is brand blue, "Flow" and the shield are

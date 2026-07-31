@@ -17,7 +17,7 @@ export default function SiteFooter() {
             {label}
           </Link>
         ))}
-        <span className="text-neutral-700">&copy; {new Date().getFullYear()} Chatnode</span>
+        <span className="text-neutral-700">&copy; {new Date().getFullYear()} ChatFlowGate</span>
       </footer>
     </>
   );

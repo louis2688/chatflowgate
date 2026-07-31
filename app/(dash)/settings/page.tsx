@@ -56,7 +56,7 @@ export default async function SettingsPage() {
           </div>
           <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 dark:text-neutral-300">
             <input type="checkbox" name="hideBranding" defaultChecked={org?.hideBranding ?? false} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-900" />
-            Hide &quot;Protected by Chatnode&quot; footer
+            Hide &quot;Protected by ChatFlowGate&quot; footer
           </label>
           <SubmitButton pendingLabel="Saving..." className="rounded-lg bg-emerald-500 px-5 py-2.5 font-medium text-white hover:bg-emerald-400">Save branding</SubmitButton>
         </ActionForm>

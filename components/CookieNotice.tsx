@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export const CONSENT_KEY = "chatnode.cookie-consent";
-export const CONSENT_EVENT = "chatnode:consent";
+export const CONSENT_KEY = "chatflowgate.cookie-consent";
+export const CONSENT_EVENT = "chatflowgate:consent";
 
 /**
  * Cookie consent for the public site.

@@ -1,6 +1,6 @@
 import AuthForm from "@/components/dash/AuthForm";
 
-export const metadata = { title: "Sign up - Chatnode" };
+export const metadata = { title: "Sign up - ChatFlowGate" };
 export const dynamic = "force-dynamic";
 
 export default function SignupPage() {

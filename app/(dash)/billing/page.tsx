@@ -129,7 +129,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
               <ul className="mt-2 space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <li>{pl.monthlyMessages.toLocaleString()} messages / month</li>
                 <li>{pl.maxBots} bot{pl.maxBots === 1 ? "" : "s"}, {pl.maxMembers} seat{pl.maxMembers === 1 ? "" : "s"}</li>
-                <li>{pl.canHideBranding ? "Badge removed" : "Chatnode badge shown"}</li>
+                <li>{pl.canHideBranding ? "Badge removed" : "ChatFlowGate badge shown"}</li>
               </ul>
               {stripeOn && pl.id !== plan.id && (
                 <ActionForm action={changePlanAction} className="mt-3">

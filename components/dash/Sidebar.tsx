@@ -64,9 +64,9 @@ export default function Sidebar({
     >
       <div className="m-stripe -mx-3 -mt-3 mb-3" />
       <div className={collapsed ? "flex flex-col items-center gap-2" : "flex items-center justify-between"}>
-        <Link href="/dashboard" title="Chatnode" className="px-1">
+        <Link href="/dashboard" title="ChatFlowGate" className="px-1">
           {collapsed ? (
-            <Image src="/icon.png" alt="Chatnode" width={30} height={30} priority className="h-[30px] w-[30px]" />
+            <Image src="/icon.png" alt="ChatFlowGate" width={30} height={30} priority className="h-[30px] w-[30px]" />
           ) : (
             <Logo className="h-auto w-[150px]" priority />
           )}

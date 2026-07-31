@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Docs - Chatnode" };
+export const metadata = { title: "Docs - ChatFlowGate" };
 export const dynamic = "force-dynamic";
 
 const NAV: Array<[string, string]> = [
@@ -60,7 +60,7 @@ export default function DocsPage() {
       <div>
         <h1 className="font-display text-2xl font-semibold">Documentation</h1>
         <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Chatnode is a secure interface and router in front of your n8n Chat workflows. n8n stays the brain; Chatnode handles the
+          ChatFlowGate is a secure interface and router in front of your n8n Chat workflows. n8n stays the brain; ChatFlowGate handles the
           widget, authentication, rate limiting, and analytics. Chat message content is never stored.
         </p>
       </div>
@@ -93,7 +93,7 @@ export default function DocsPage() {
               <span className={strong}> capture a lead</span> first. Then drop one tag on your site:
             </p>
             <pre className={pre}>
-              <code>{`<script src="https://www.chatnode.app/embed.js" data-bot="BOT_ID" defer></script>`}</code>
+              <code>{`<script src="https://www.chatflowgate.com/embed.js" data-bot="BOT_ID" defer></script>`}</code>
             </pre>
             <p className={p}>Add the domains that may use the bot to its origin allowlist. Anything not listed is refused a session.</p>
           </Section>
@@ -124,7 +124,7 @@ export default function DocsPage() {
           </Section>
 
           <Section id="backend-integration" title="Backend integration">
-            <p className={p}>For every user message, Chatnode POSTs JSON to your bot webhook:</p>
+            <p className={p}>For every user message, ChatFlowGate POSTs JSON to your bot webhook:</p>
             <pre className={pre}>
               <code>{`POST <your n8n Chat Trigger webhook>
 Content-Type: application/json
@@ -148,7 +148,7 @@ Content-Type: application/json
               request time.
             </p>
             <p className={p}>
-              Reply with either a single JSON body or a stream. Chatnode reads the first text field it finds among{" "}
+              Reply with either a single JSON body or a stream. ChatFlowGate reads the first text field it finds among{" "}
               <span className={code}>content</span>, <span className={code}>delta</span>, <span className={code}>output</span>,{" "}
               <span className={code}>text</span>, <span className={code}>message</span>, <span className={code}>reply</span>.
             </p>
@@ -157,7 +157,7 @@ Content-Type: application/json
           <Section id="widget-api" title="Chat widget API">
             <p className={p}>The loader is configured with data attributes on the script tag:</p>
             <pre className={pre}>
-              <code>{`<script src="https://www.chatnode.app/embed.js"
+              <code>{`<script src="https://www.chatflowgate.com/embed.js"
         data-bot="BOT_ID"          // required
         data-color="#1c69d4"       // launcher colour
         data-position="left"       // "left" or "right" (default)
@@ -178,14 +178,14 @@ Content-Type: application/json
           <Section id="session-management" title="Session management">
             <p className={p}>
               Anonymous visitors get a short-lived session token bound to a single bot. The loader mints it from the <em>parent</em> page,
-              so the browser sends your real origin and Chatnode can check it against the bot allowlist before issuing anything:
+              so the browser sends your real origin and ChatFlowGate can check it against the bot allowlist before issuing anything:
             </p>
             <pre className={pre}>
               <code>{`POST /api/session/<botId>   ->   { "token": "..." }`}</code>
             </pre>
             <p className={p}>
               Tokens are HMAC-signed, valid for 24 hours, and only accepted by the bot they were minted for. The widget keeps the token in{" "}
-              <span className={code}>sessionStorage</span> under <span className={code}>chatnode.token.&lt;botId&gt;</span>, falling back
+              <span className={code}>sessionStorage</span> under <span className={code}>chatflowgate.token.&lt;botId&gt;</span>, falling back
               to memory when storage is blocked. Minting is rate limited to 10 per minute per IP per bot.
             </p>
             <p className={p}>
@@ -199,7 +199,7 @@ Content-Type: application/json
           <Section id="streaming" title="Chat streaming">
             <p className={p}>
               Replies stream to the widget as <span className={code}>text/plain</span> deltas and the bubble grows token by token. On the
-              upstream side Chatnode parses each line and accepts several shapes, so most n8n setups work unchanged:
+              upstream side ChatFlowGate parses each line and accepts several shapes, so most n8n setups work unchanged:
             </p>
             <pre className={pre}>
               <code>{`{"content":"Hel"}              // NDJSON token objects
@@ -297,14 +297,14 @@ plain text                     // raw token`}</code>
 
           <Section id="mcp" title="MCP server">
             <p className={p}>
-              Chatnode speaks the Model Context Protocol over HTTP, so Claude or Cursor can manage a workspace directly. Authenticate with
+              ChatFlowGate speaks the Model Context Protocol over HTTP, so Claude or Cursor can manage a workspace directly. Authenticate with
               a workspace API key from <Link href="/settings" className={link}>Settings</Link>:
             </p>
             <pre className={pre}>
               <code>{`{
   "mcpServers": {
-    "chatnode": {
-      "url": "https://www.chatnode.app/api/mcp",
+    "chatflowgate": {
+      "url": "https://www.chatflowgate.com/api/mcp",
       "headers": { "Authorization": "Bearer sk_..." }
     }
   }
@@ -323,7 +323,7 @@ plain text                     // raw token`}</code>
               directly:
             </p>
             <pre className={pre}>
-              <code>{`curl -X POST https://www.chatnode.app/api/chat/BOT_ID \\
+              <code>{`curl -X POST https://www.chatflowgate.com/api/chat/BOT_ID \\
   -H "X-API-Key: sk_..." -H "Content-Type: application/json" \\
   -d '{"message":"hello","sessionId":"crm-42"}'`}</code>
             </pre>

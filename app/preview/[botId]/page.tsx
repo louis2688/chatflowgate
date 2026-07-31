@@ -5,7 +5,7 @@ import { getBot, orgHideBranding, publicConfig } from "@/lib/bots";
 import PreviewStage from "@/components/PreviewStage";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Live preview - Chatnode" };
+export const metadata = { title: "Live preview - ChatFlowGate" };
 
 // Owner-only. The preview runs same-origin, which bypasses the bot's domain
 // allowlist, so it must not be reachable by anyone holding a bot id -- and each

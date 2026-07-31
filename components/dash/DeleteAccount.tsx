@@ -12,7 +12,7 @@ export default function DeleteAccount() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-neutral-600 dark:text-neutral-400">
-        Permanently delete your Chatnode account. This cannot be undone.
+        Permanently delete your ChatFlowGate account. This cannot be undone.
       </p>
       <input
         value={confirm}

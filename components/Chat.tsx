@@ -67,16 +67,23 @@ function Honeypot({
 
 let memoryToken: string | null = null;
 function tokenKey(botId: string) {
-  return `chatnode.token.${botId}`;
+  return `chatflowgate.token.${botId}`;
 }
 function readToken(botId: string): string | null {
   try {
     const current = sessionStorage.getItem(tokenKey(botId));
     if (current) return current;
-    // Adopt a session minted before the Chatnode rename, so a visitor mid-chat
+    // Adopt a session minted before the ChatFlowGate rename, so a visitor mid-chat
     // is not bounced back to the lead form. Safe to drop once traffic has
     // cycled (sessions are 24h).
-    const legacy = sessionStorage.getItem(`chatlayer.token.${botId}`);
+    // Two renames deep now, so check every old prefix newest-first.
+    let legacy: string | null = null;
+    let legacyKey = "";
+    for (const prefix of ["chatnode", "chatlayer"]) {
+      legacyKey = `${prefix}.token.${botId}`;
+      legacy = sessionStorage.getItem(legacyKey);
+      if (legacy) break;
+    }
     if (legacy) {
       // Keep the token even if the migration write fails (quota, write-blocked
       // storage). Bouncing a lead-capture visitor back to the form is the exact
@@ -84,7 +91,7 @@ function readToken(botId: string): string | null {
       memoryToken = legacy;
       try {
         sessionStorage.setItem(tokenKey(botId), legacy);
-        sessionStorage.removeItem(`chatlayer.token.${botId}`);
+        sessionStorage.removeItem(legacyKey);
       } catch {
         // retried next call; idempotent
       }
@@ -147,7 +154,10 @@ export default function Chat({
     setMounted(true);
     // Remembered language, per bot so two widgets on one site stay independent.
     try {
-      const saved = window.localStorage.getItem(`chatnode.lang.${config.id}`);
+      // Pre-rename key too, so nobody silently loses the language they picked.
+      const saved =
+        window.localStorage.getItem(`chatflowgate.lang.${config.id}`) ??
+        window.localStorage.getItem(`chatnode.lang.${config.id}`);
       // The visitor's own choice beats the owner's default; the default only
       // decides what a first-time visitor lands on.
       if (isLocale(saved)) setLocale(saved);
@@ -163,7 +173,7 @@ export default function Chat({
     if (!config.allowAnonymous && readToken(config.id)) setLeadDone(true);
     if (config.consentRequired) {
       try {
-        if (sessionStorage.getItem(`chatnode.consent.${config.id}`) || sessionStorage.getItem(`chatlayer.consent.${config.id}`)) setConsented(true);
+        if (sessionStorage.getItem(`chatflowgate.consent.${config.id}`) || sessionStorage.getItem(`chatnode.consent.${config.id}`) || sessionStorage.getItem(`chatlayer.consent.${config.id}`)) setConsented(true);
       } catch {
         /* storage blocked */
       }
@@ -398,7 +408,7 @@ export default function Chat({
               if (!isLocale(next)) return;
               setLocale(next);
               try {
-                window.localStorage.setItem(`chatnode.lang.${config.id}`, next);
+                window.localStorage.setItem(`chatflowgate.lang.${config.id}`, next);
               } catch {
                 // storage blocked: the choice still applies for this session
               }
@@ -424,6 +434,10 @@ export default function Chat({
             // Embedded in the loader's iframe: ask the parent to close the panel.
             // The payload carries nothing sensitive, and embed.js checks the origin.
             if (typeof window !== "undefined" && window.parent !== window) {
+              // Both names on purpose: a visitor may still have the pre-rename
+              // embed.js cached, and that copy only listens for the old type.
+              // Sending one message it ignores is cheaper than a dead button.
+              window.parent.postMessage({ type: "chatflowgate:minimize" }, "*");
               window.parent.postMessage({ type: "chatnode:minimize" }, "*");
             }
           }}
@@ -446,7 +460,7 @@ export default function Chat({
             onClick={() => {
               setConsented(true);
               try {
-                sessionStorage.setItem(`chatnode.consent.${config.id}`, "1");
+                sessionStorage.setItem(`chatflowgate.consent.${config.id}`, "1");
               } catch {
                 /* storage blocked */
               }
@@ -583,7 +597,7 @@ export default function Chat({
             </button>
           </form>
           {!hideBranding && (
-            <p className="pb-2 text-center text-[10px] text-neutral-400 dark:text-neutral-600">Protected by Chatnode</p>
+            <p className="pb-2 text-center text-[10px] text-neutral-400 dark:text-neutral-600">Protected by ChatFlowGate</p>
           )}
         </>
       )}

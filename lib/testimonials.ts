@@ -2,7 +2,7 @@
 //
 // Add an entry ONLY when the person actually said it and has agreed to be
 // quoted by name. Invented or embellished testimonials are illegal in the
-// markets Chatnode sells into (the FTC's 2024 rule on fake reviews and
+// markets ChatFlowGate sells into (the FTC's 2024 rule on fake reviews and
 // testimonials, and the EU Unfair Commercial Practices Directive), and a
 // fabricated star rating in the page schema breaches Google's structured data
 // policy, which risks a manual action against the whole domain.

@@ -26,7 +26,7 @@ export default function WebhookAuth({
     <details className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800" open={defaultType !== "none"}>
       <summary className="cursor-pointer text-sm text-neutral-700 dark:text-neutral-300">Webhook authentication</summary>
       <p className="mt-2 text-xs text-neutral-500">
-        Match whatever your n8n Chat Trigger expects. Chatnode sends these to the webhook; they never reach the browser.
+        Match whatever your n8n Chat Trigger expects. ChatFlowGate sends these to the webhook; they never reach the browser.
       </p>
 
       <div className="mt-3">

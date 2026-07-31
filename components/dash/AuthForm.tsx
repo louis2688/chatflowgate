@@ -40,7 +40,7 @@ export default function AuthForm({ mode, showGoogle }: { mode: "login" | "signup
       </Link>
       <h1 className="font-display text-2xl font-semibold">{isSignup ? "Create your workspace" : "Welcome back"}</h1>
       <p className="mt-1 text-sm text-neutral-400">
-        {isSignup ? "Start securing your n8n chatbots." : "Sign in to your Chatnode dashboard."}
+        {isSignup ? "Start securing your n8n chatbots." : "Sign in to your ChatFlowGate dashboard."}
       </p>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-3">

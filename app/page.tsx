@@ -11,16 +11,16 @@ import { publicStats } from "@/lib/stats";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Chatnode | Secure, multi-tenant chat frontend and webhook gateway for n8n",
+  title: "ChatFlowGate | Secure, multi-tenant chat frontend and webhook gateway for n8n",
   description:
     "Put a security gateway in front of your n8n Chat workflows: the webhook stays server-side, every message is origin-checked, rate limited and metered, and the widget is white-label. Chat content is never stored.",
-  alternates: { canonical: "https://www.chatnode.app/" },
+  alternates: { canonical: "https://www.chatflowgate.com/" },
   openGraph: {
-    title: "Chatnode | Secure, multi-tenant chat frontend for n8n",
+    title: "ChatFlowGate | Secure, multi-tenant chat frontend for n8n",
     description:
       "Hidden webhooks, per-IP and per-session rate limiting, signed bot-bound sessions, and white-label widgets for n8n Chat workflows.",
-    url: "https://www.chatnode.app/",
-    siteName: "Chatnode",
+    url: "https://www.chatflowgate.com/",
+    siteName: "ChatFlowGate",
     type: "website",
   },
 };
@@ -53,7 +53,7 @@ const RISKS: Array<[string, string]> = [
 const FEATURES: Array<[string, string]> = [
   [
     "Hidden webhook",
-    "The n8n URL is a server-side database field. The browser only ever talks to your Chatnode endpoint, so the workflow address is never exposed and cannot be scraped.",
+    "The n8n URL is a server-side database field. The browser only ever talks to your ChatFlowGate endpoint, so the workflow address is never exposed and cannot be scraped.",
   ],
   [
     "Token-bucket rate limiting",
@@ -77,18 +77,18 @@ const FEATURES: Array<[string, string]> = [
   ],
   [
     "No chat content stored",
-    "Message text is never written down. Chatnode keeps one row per session with IP, coarse location, browser, and a message counter, which is what the analytics are built from.",
+    "Message text is never written down. ChatFlowGate keeps one row per session with IP, coarse location, browser, and a message counter, which is what the analytics are built from.",
   ],
   [
     "White-label widget",
-    "One script tag. Per-bot colour, logo, greeting, prompts, RTL, consent screen, and custom CSS, with the Chatnode badge removable on any paid plan.",
+    "One script tag. Per-bot colour, logo, greeting, prompts, RTL, consent screen, and custom CSS, with the ChatFlowGate badge removable on any paid plan.",
   ],
 ];
 
 const FAQ: Array<[string, string]> = [
   [
-    "How does Chatnode connect to my n8n workflow?",
-    "Paste your n8n Chat Trigger production webhook URL into the bot. Chatnode stores it server-side and forwards each message as a standard sendMessage payload with the session id and chat input, then streams the reply back to the widget.",
+    "How does ChatFlowGate connect to my n8n workflow?",
+    "Paste your n8n Chat Trigger production webhook URL into the bot. ChatFlowGate stores it server-side and forwards each message as a standard sendMessage payload with the session id and chat input, then streams the reply back to the widget.",
   ],
   [
     "Does it work with n8n Cloud and self-hosted n8n?",
@@ -100,7 +100,7 @@ const FAQ: Array<[string, string]> = [
   ],
   [
     "Is my chat content stored anywhere?",
-    "No. Message text is never persisted. Chatnode records session metadata only: IP address, country, region and city from edge headers, parsed browser, OS and device, and a message count. In lead capture mode it also stores the contact details the visitor submitted.",
+    "No. Message text is never persisted. ChatFlowGate records session metadata only: IP address, country, region and city from edge headers, parsed browser, OS and device, and a message count. In lead capture mode it also stores the contact details the visitor submitted.",
   ],
   [
     "What happens when someone abuses a bot?",
@@ -123,12 +123,12 @@ export default async function Home() {
     "@graph": [
       {
         "@type": "SoftwareApplication",
-        name: "Chatnode",
+        name: "ChatFlowGate",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description:
           "Secure, white-label chat frontend and webhook gateway for n8n Chat workflows, with hidden webhooks, rate limiting, signed sessions, and multi-tenant workspaces.",
-        url: "https://www.chatnode.app/",
+        url: "https://www.chatflowgate.com/",
         ...(rating && TESTIMONIALS.some((t) => t.rating)
           ? {
               aggregateRating: {
@@ -182,7 +182,7 @@ export default async function Home() {
             <svg className="h-3 w-3 text-[#1c69d4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
               <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" strokeLinejoin="round" />
             </svg>
-            Chatnode &middot; for n8n
+            ChatFlowGate &middot; for n8n
           </p>
           <h1 className="mt-6 text-4xl font-bold uppercase leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
             Your n8n chat,
@@ -224,7 +224,7 @@ export default async function Home() {
           <div className="mt-10">
             <p className={eyebrow}>Embed any bot</p>
             <pre className="mt-2 overflow-x-auto border border-white/10 bg-[#0d0d0d] p-4 font-mono text-sm text-[#4a90e2]">
-              <code>{`<script src="https://www.chatnode.app/embed.js" data-bot="BOT_ID" defer></script>`}</code>
+              <code>{`<script src="https://www.chatflowgate.com/embed.js" data-bot="BOT_ID" defer></script>`}</code>
             </pre>
           </div>
         </div>
@@ -323,7 +323,7 @@ export default async function Home() {
                   <li>{p.monthlyMessages.toLocaleString()} messages / month</li>
                   <li>{p.maxBots} bot{p.maxBots === 1 ? "" : "s"}</li>
                   <li>{p.maxMembers} seat{p.maxMembers === 1 ? "" : "s"}</li>
-                  <li>{p.canHideBranding ? "Badge removable" : "Chatnode badge shown"}</li>
+                  <li>{p.canHideBranding ? "Badge removable" : "ChatFlowGate badge shown"}</li>
                 </ul>
                 <Link href="/signup" className={`${p.id === "pro" ? cta : ctaOutline} mt-6 w-full`}>
                   {p.price === 0 ? "Start free" : `Choose ${p.label}`}

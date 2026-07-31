@@ -23,8 +23,8 @@ function pricingLine(): string {
     (p) => `${p.label} is $${p.price}/month for ${seats(p.maxMembers)}, ${bots(p.maxBots)} and ${p.monthlyMessages.toLocaleString()} messages`,
   );
   return (
-    `Chatnode has ${all.length} plans. Free gives you ${bots(free.maxBots)} and ${free.monthlyMessages.toLocaleString()} messages a month. ` +
-    `${parts.join(". ")}. Every paid plan removes the Chatnode badge, and top-up credits never expire.`
+    `ChatFlowGate has ${all.length} plans. Free gives you ${bots(free.maxBots)} and ${free.monthlyMessages.toLocaleString()} messages a month. ` +
+    `${parts.join(". ")}. Every paid plan removes the ChatFlowGate badge, and top-up credits never expire.`
   );
 }
 
@@ -37,7 +37,7 @@ const REPLIES: Reply[] = [
   },
   {
     match: /secur|safe|protect|ssrf|rate.?limit|abuse|ban/i,
-    text: "Security is the point of Chatnode. Your n8n webhook URL never reaches the browser, so nobody can scrape or hammer it directly. On top of that: per-session and per-IP rate limiting that resists spoofed headers, an IP ban list, a per-bot domain allowlist, and SSRF protection that re-checks the resolved address at connection time to block DNS rebinding.",
+    text: "Security is the point of ChatFlowGate. Your n8n webhook URL never reaches the browser, so nobody can scrape or hammer it directly. On top of that: per-session and per-IP rate limiting that resists spoofed headers, an IP ban list, a per-bot domain allowlist, and SSRF protection that re-checks the resolved address at connection time to block DNS rebinding.",
   },
   {
     match: /privacy|store|storage|gdpr|complian|data|log/i,
@@ -45,15 +45,15 @@ const REPLIES: Reply[] = [
   },
   {
     match: /n8n|webhook|workflow|connect|integrat/i,
-    text: "Point a bot at your n8n Chat Trigger webhook URL and Chatnode does the rest. Every message is authenticated, rate limited and metered before it reaches your workflow, and the reply streams straight back to the visitor. Your n8n stays the brain; Chatnode is the secure interface in front of it.",
+    text: "Point a bot at your n8n Chat Trigger webhook URL and ChatFlowGate does the rest. Every message is authenticated, rate limited and metered before it reaches your workflow, and the reply streams straight back to the visitor. Your n8n stays the brain; ChatFlowGate is the secure interface in front of it.",
   },
   {
     match: /embed|install|add to|script|website|start|setup|set up/i,
-    text: "One script tag. Add <script src=\"https://www.chatnode.app/embed.js\" data-bot=\"YOUR_BOT_ID\" defer></script> to any page on a domain you have allowlisted, and the widget appears. You can also embed it directly as an iframe if you prefer.",
+    text: "One script tag. Add <script src=\"https://www.chatflowgate.com/embed.js\" data-bot=\"YOUR_BOT_ID\" defer></script> to any page on a domain you have allowlisted, and the widget appears. You can also embed it directly as an iframe if you prefer.",
   },
   {
     match: /team|seat|member|invite|agency|client/i,
-    text: "Chatnode is built for teams. A workspace can have several members, each with a role, and you can run many bots from one account, each pointing at a different n8n workflow. That makes it a good fit for agencies running chatbots for multiple clients.",
+    text: "ChatFlowGate is built for teams. A workspace can have several members, each with a role, and you can run many bots from one account, each pointing at a different n8n workflow. That makes it a good fit for agencies running chatbots for multiple clients.",
   },
   {
     match: /lead|capture|email|form|contact/i,
@@ -64,13 +64,13 @@ const REPLIES: Reply[] = [
     text: "The widget streams replies token by token, renders markdown safely, supports file uploads with per-bot type and size limits, right-to-left layouts, a consent screen, custom CSS, and light or dark themes.",
   },
   {
-    match: /who|what (is|are) (you|this|chatnode)|about|hello|hi\b|hey/i,
-    text: "Hi! I'm the Chatnode demo assistant. Chatnode is a secure, branded chat front end for n8n workflows: it hides your webhook, blocks abuse, and gives you a widget you can drop on any site with one script tag. Ask me about pricing, security, or how it connects to n8n.",
+    match: /who|what (is|are) (you|this|chatflowgate)|about|hello|hi\b|hey/i,
+    text: "Hi! I'm the ChatFlowGate demo assistant. ChatFlowGate is a secure, branded chat front end for n8n workflows: it hides your webhook, blocks abuse, and gives you a widget you can drop on any site with one script tag. Ask me about pricing, security, or how it connects to n8n.",
   },
 ];
 
 const FALLBACK =
-  "I'm a small demo assistant, so I only know about Chatnode itself. Try asking about pricing, security, how it connects to n8n, or how to embed the widget. In your own bot this would be your n8n workflow answering, with whatever model and data you wire up.";
+  "I'm a small demo assistant, so I only know about ChatFlowGate itself. Try asking about pricing, security, how it connects to n8n, or how to embed the widget. In your own bot this would be your n8n workflow answering, with whatever model and data you wire up.";
 
 function replyFor(input: string): string {
   const found = REPLIES.find((r) => r.match.test(input));

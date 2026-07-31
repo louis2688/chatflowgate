@@ -4,7 +4,7 @@ import { recentTxns } from "@/lib/credits";
 import { describeTxn } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Billing activity - Chatnode" };
+export const metadata = { title: "Billing activity - ChatFlowGate" };
 
 export default async function ActivityPage() {
   const { orgId } = await requireContext();

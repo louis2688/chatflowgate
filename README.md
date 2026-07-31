@@ -1,10 +1,10 @@
-# Chatnode for n8n
+# ChatFlowGate for n8n
 
 A secure, branded, multi-tenant chat frontend and gateway for n8n Chat workflows.
 Your n8n webhooks stay server-side; every message is origin-checked, authenticated,
 and rate-limited before it reaches your workflow. Manage many bots, gate access
 with real auth, and embed a white-label widget anywhere. Chat content is never
-stored -- Chatnode keeps only usage stats.
+stored -- ChatFlowGate keeps only usage stats.
 
 **New here?** See [ARCHITECTURE.md](ARCHITECTURE.md) for a full walkthrough of how the app works.
 
@@ -12,7 +12,7 @@ stored -- Chatnode keeps only usage stats.
 visitor / customer app
         |
         v
-  Chatnode gateway   (origin check | auth: session token / user / API key | rate limit)
+  ChatFlowGate gateway   (origin check | auth: session token / user / API key | rate limit)
         |
         v
    per-bot n8n webhook
@@ -56,7 +56,7 @@ create bots, view analytics, manage team + API keys in the dashboard.
 
 **V3 - agency / enterprise**
 - Organizations = teams; member management and invites
-- White-label: brand name, custom domain field, hide "Protected by Chatnode"
+- White-label: brand name, custom domain field, hide "Protected by ChatFlowGate"
 - Org-scoped API keys for server-to-server chat (`X-API-Key`)
 
 ## Embedding

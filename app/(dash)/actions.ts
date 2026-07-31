@@ -263,7 +263,7 @@ export async function purchaseCreditsAction(_prev: ActionResult | null, formData
             unit_amount: pkg.price * 100,
             ...(productId
               ? { product: productId }
-              : { product_data: { name: `Chatnode ${pkg.label} pack - ${pkg.credits.toLocaleString()} messages` } }),
+              : { product_data: { name: `ChatFlowGate ${pkg.label} pack - ${pkg.credits.toLocaleString()} messages` } }),
           },
         },
       ],

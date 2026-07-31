@@ -1,14 +1,14 @@
 import MarketingShell from "@/components/MarketingShell";
 
-export const metadata = { title: "Privacy - Chatnode" };
+export const metadata = { title: "Privacy - ChatFlowGate" };
 
 const h2 = "pt-3 text-lg font-bold uppercase tracking-wide text-white";
 
 export default function PrivacyPage() {
   return (
-    <MarketingShell title="Privacy" subtitle="What Chatnode collects, and what it deliberately does not.">
+    <MarketingShell title="Privacy" subtitle="What ChatFlowGate collects, and what it deliberately does not.">
       <p>
-        Chatnode is a gateway in front of your n8n workflows. This page describes the data the service handles. If you run a bot, you are
+        ChatFlowGate is a gateway in front of your n8n workflows. This page describes the data the service handles. If you run a bot, you are
         responsible for what your workflow does with any data it receives.
       </p>
 
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
       <h2 className={h2}>Retention and your rights</h2>
       <p>
         Session data is kept while your workspace is active; deleting a bot removes its sessions. To request access to or deletion of your
-        data, email <a href="mailto:privacy@chatnode.app" className="text-[#4a90e2] hover:underline">privacy@chatnode.app</a>.
+        data, email <a href="mailto:privacy@chatflowgate.com" className="text-[#4a90e2] hover:underline">privacy@chatflowgate.com</a>.
       </p>
 
       <p className="text-sm text-neutral-500">This is a plain-language summary, not legal advice. Have it reviewed before you rely on it.</p>

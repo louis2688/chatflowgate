@@ -66,7 +66,7 @@ export async function planPriceId(planId: Exclude<PlanId, "free">): Promise<stri
   const s = stripe();
   if (!s) throw new Error("Stripe is not configured.");
   const plan = PLANS[planId];
-  const lookupKey = `chatnode_${plan.id}_monthly`;
+  const lookupKey = `chatflowgate_${plan.id}_monthly`;
   const existing = await s.prices.list({ lookup_keys: [lookupKey], limit: 1 });
   if (existing.data[0]) return existing.data[0].id;
 
@@ -101,7 +101,7 @@ export async function planPriceId(planId: Exclude<PlanId, "free">): Promise<stri
     unit_amount: plan.price * 100,
     recurring: { interval: "month" },
     lookup_key: lookupKey,
-    product_data: { name: `Chatnode ${plan.label}` },
+    product_data: { name: `ChatFlowGate ${plan.label}` },
     metadata: { planId: plan.id },
   });
   return price.id;
@@ -110,7 +110,7 @@ export async function planPriceId(planId: Exclude<PlanId, "free">): Promise<stri
 // Reverse of planPriceId: lets the webhook map a subscription's price back to
 // a plan, which also covers changes made inside the Billing Portal.
 export function planFromLookupKey(lookupKey: string | null | undefined): PlanId | null {
-  const m = /^chatnode_(\w+)_monthly$/.exec(lookupKey ?? "");
+  const m = /^chatflowgate_(\w+)_monthly$/.exec(lookupKey ?? "");
   const id = m?.[1];
   return id && id !== "free" && Object.hasOwn(PLANS, id) ? (id as PlanId) : null;
 }

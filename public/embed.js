@@ -1,4 +1,4 @@
-/* Chatnode embed loader. Usage:
+/* ChatFlowGate embed loader. Usage:
    <script src="https://host/embed.js" data-bot="BOT_ID" data-color="#1c69d4" defer></script>
    Optional: data-position, data-width, data-height, data-button-text, data-greeting.
    Mints an origin-validated session in the PARENT context (so the bot's domain
@@ -9,7 +9,7 @@
   if (!script) return;
   var host = new URL(script.src).origin;
   var botId = script.getAttribute("data-bot");
-  if (!botId) { console.error("[Chatnode] missing data-bot attribute"); return; }
+  if (!botId) { console.error("[ChatFlowGate] missing data-bot attribute"); return; }
   var color = script.getAttribute("data-color") || "#1c69d4";
   var buttonText = script.getAttribute("data-button-text") || "";
   var greeting = script.getAttribute("data-greeting") || "";
@@ -48,18 +48,18 @@
   var style = document.createElement("style");
   style.textContent =
     "@media (max-width:" + MOBILE_MAX + "px){" +
-    ".chatnode-frame{top:0!important;left:0!important;right:0!important;bottom:0!important;" +
+    ".chatflowgate-frame{top:0!important;left:0!important;right:0!important;bottom:0!important;" +
     "width:100vw!important;height:100vh!important;height:100dvh!important;" +
     "border-radius:0!important;box-shadow:none!important}" +
     // The panel covers the screen, so the launcher under it is an invisible
     // tap target. The widget header's own minimize button is the way back out.
-    ".chatnode-launcher[data-open='true']{display:none!important}" +
+    ".chatflowgate-launcher[data-open='true']{display:none!important}" +
     "}";
   document.head.appendChild(style);
 
   var frame = document.createElement("iframe");
   frame.title = "Chat";
-  frame.className = "chatnode-frame";
+  frame.className = "chatflowgate-frame";
   frame.style.cssText =
     "position:fixed;" + vert + ":92px;" + side + ":20px;" +
     "width:min(" + w + "px,calc(100vw - 40px));height:min(" + h + "px,calc(100dvh - 120px));" +
@@ -82,7 +82,7 @@
 
   var btn = document.createElement("button");
   btn.type = "button";
-  btn.className = "chatnode-launcher";
+  btn.className = "chatflowgate-launcher";
   btn.style.cssText =
     "position:fixed;" + vert + ":20px;" + side + ":20px;height:56px;border:0;cursor:pointer;" +
     "display:flex;align-items:center;justify-content:center;gap:8px;" +
@@ -144,10 +144,12 @@
   };
 
   // The widget can ask to be closed from its own header. Only trust messages
-  // coming from the Chatnode origin that serves this script.
+  // coming from the ChatFlowGate origin that serves this script.
   window.addEventListener("message", function (e) {
     if (e.origin !== host) return;
-    if (!e.data || e.data.type !== "chatnode:minimize") return;
+    // Accept the pre-rename type too: a widget iframe served from a cached
+    // build may still be sending it.
+    if (!e.data || (e.data.type !== "chatflowgate:minimize" && e.data.type !== "chatnode:minimize")) return;
     open = false;
     render();
   });

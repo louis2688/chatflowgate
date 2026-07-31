@@ -280,7 +280,7 @@ function Preview({ s, open, setOpen, device, vp }: { s: PreviewState; open: bool
           </div>
         )}
         {/* Hidden while a fullscreen panel covers it, matching the
-            .chatnode-launcher[data-open=true] rule in embed.js. */}
+            .chatflowgate-launcher[data-open=true] rule in embed.js. */}
         {!(full && open) && (
           <button
             type="button"
@@ -335,7 +335,7 @@ export default function BotEditor({ bot }: { bot?: Bot }) {
   // What the panel actually becomes on the selected handset, used by the readout.
   const fit = clampedPanel(vp, s.widgetWidth, s.widgetHeight);
 
-  const origin = typeof window === "undefined" ? "https://www.chatnode.app" : window.location.origin;
+  const origin = typeof window === "undefined" ? "https://www.chatflowgate.com" : window.location.origin;
   // HTML-attribute-escape free text so quotes in a greeting can't break the tag.
   const attr = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   const snippet =

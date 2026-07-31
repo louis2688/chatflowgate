@@ -15,7 +15,7 @@ const google =
     : undefined;
 
 export const auth = betterAuth({
-  appName: "Chatnode",
+  appName: "ChatFlowGate",
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: { enabled: true },
   user: { deleteUser: { enabled: true } },

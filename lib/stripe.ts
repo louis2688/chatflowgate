@@ -109,8 +109,12 @@ export async function planPriceId(planId: Exclude<PlanId, "free">): Promise<stri
 
 // Reverse of planPriceId: lets the webhook map a subscription's price back to
 // a plan, which also covers changes made inside the Billing Portal.
+// Prices created before the rename still carry chatnode_/chatlayer_ lookup keys
+// in the live Stripe account. Matching only the current prefix makes this return
+// null for them, and the webhook then treats a real Billing Portal plan change as
+// "no plan" -- writing the status but silently dropping the upgrade.
 export function planFromLookupKey(lookupKey: string | null | undefined): PlanId | null {
-  const m = /^chatflowgate_(\w+)_monthly$/.exec(lookupKey ?? "");
+  const m = /^(?:chatflowgate|chatnode|chatlayer)_(\w+)_monthly$/.exec(lookupKey ?? "");
   const id = m?.[1];
   return id && id !== "free" && Object.hasOwn(PLANS, id) ? (id as PlanId) : null;
 }

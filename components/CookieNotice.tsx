@@ -7,6 +7,33 @@ import { useEffect, useState } from "react";
 export const CONSENT_KEY = "chatflowgate.cookie-consent";
 export const CONSENT_EVENT = "chatflowgate:consent";
 
+// Keys used before the rename. A stored choice is consent under GDPR, so losing
+// it means re-asking someone who already answered -- and silently keeping
+// analytics off for a visitor who had opted in. Read the old keys and migrate.
+const LEGACY_CONSENT_KEYS = ["chatnode.cookie-consent", "chatlayer.cookie-consent"];
+
+export function readConsent(): string | null {
+  try {
+    const current = localStorage.getItem(CONSENT_KEY);
+    if (current) return current;
+    for (const key of LEGACY_CONSENT_KEYS) {
+      const old = localStorage.getItem(key);
+      if (old) {
+        try {
+          localStorage.setItem(CONSENT_KEY, old);
+          localStorage.removeItem(key);
+        } catch {
+          // migration is best effort; the value is still honoured this session
+        }
+        return old;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Cookie consent for the public site.
  *
@@ -26,7 +53,7 @@ export default function CookieNotice() {
   useEffect(() => {
     if (inWidget) return;
     try {
-      if (!localStorage.getItem(CONSENT_KEY)) setShow(true);
+      if (!readConsent()) setShow(true);
     } catch {
       // storage blocked: stay quiet rather than nag on every page view
     }

@@ -7,6 +7,8 @@ import { clientIp, devTopUpAllowed, intEnv } from "../lib/config.ts";
 import { assertHttpUrl } from "../lib/ssrf.ts";
 import { parseDelta } from "../lib/stream.ts";
 import { webhookAuthHeaders } from "../lib/webhook-auth.ts";
+import { planFromLookupKey } from "../lib/stripe.ts";
+import { localeDir, isLocale, t as translate, LOCALES, DEFAULT_LOCALE } from "../lib/i18n.ts";
 import { readableText } from "../lib/contrast.ts";
 import { planOf, PLANS, PACKAGES, describeTxn } from "../lib/plans.ts";
 import { geoAllowed } from "../lib/geo.ts";
@@ -219,5 +221,37 @@ assert.equal(describeTxn(stripey), "Starter pack purchased");
 assert.ok(!describeTxn(stripey).includes("cs_test"), "the Stripe session id must not reach the UI");
 assert.equal(describeTxn("message:overage"), "Message (over allowance)");
 assert.equal(describeTxn("unmapped-reason"), "unmapped-reason", "unknown reasons fall through unchanged");
+
+// --- rename compatibility -------------------------------------------------
+// The app has been renamed twice. Prices and stored keys created under the old
+// names still exist in the live Stripe account and in visitors' browsers, so
+// every lookup has to keep reading them. A regression here is silent: a plan
+// change appears to work and does nothing.
+assert.equal(planFromLookupKey("chatflowgate_pro_monthly"), "pro", "current prefix maps to a plan");
+assert.equal(planFromLookupKey("chatnode_pro_monthly"), "pro", "pre-rename prefix still maps");
+assert.equal(planFromLookupKey("chatlayer_max_monthly"), "max", "oldest prefix still maps");
+assert.equal(planFromLookupKey("chatflowgate_free_monthly"), null, "free is not a purchasable plan");
+assert.equal(planFromLookupKey("chatflowgate_bogus_monthly"), null, "unknown tier is rejected");
+assert.equal(planFromLookupKey("chatflowgate_constructor_monthly"), null, "prototype keys are rejected");
+assert.equal(planFromLookupKey(null), null, "missing lookup key is not a plan");
+assert.equal(planFromLookupKey("something_pro_monthly"), null, "a foreign prefix is not accepted");
+
+// --- i18n -----------------------------------------------------------------
+assert.equal(localeDir("ar"), "rtl", "arabic flips the layout");
+assert.equal(localeDir("en"), "ltr");
+assert.equal(localeDir("ja"), "ltr", "japanese is left-to-right despite the script");
+assert.equal(localeDir("nonsense"), "ltr", "an unknown locale must not flip the layout");
+assert.ok(isLocale(DEFAULT_LOCALE) && DEFAULT_LOCALE === "en", "english is the default");
+assert.equal(isLocale("constructor"), false, "prototype keys are not locales");
+assert.equal(isLocale(null), false);
+for (const l of LOCALES) {
+  // Falling back per key means a half-finished translation degrades one string
+  // at a time; an empty string would render as a blank button.
+  assert.ok(translate(l.code, "startChat").length > 0, `${l.code} has a start button label`);
+  assert.ok(translate(l.code, "typeMessage").length > 0, `${l.code} has a composer placeholder`);
+}
+assert.equal(translate("nonsense", "startChat"), translate("en", "startChat"), "unknown locale falls back to english");
+assert.ok(translate("en", "fileTooLarge", { mb: 7 }).includes("7"), "interpolation substitutes");
+assert.ok(!translate("en", "fileTooLarge", { mb: 7 }).includes("{mb}"), "no placeholder is left behind");
 
 console.log("selfcheck: all assertions passed");

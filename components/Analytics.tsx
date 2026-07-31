@@ -3,7 +3,7 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CONSENT_KEY, CONSENT_EVENT } from "./CookieNotice";
+import { CONSENT_EVENT, readConsent } from "./CookieNotice";
 
 const GA_ID = "G-R8KR9N6Z05";
 
@@ -26,7 +26,7 @@ export default function Analytics() {
   useEffect(() => {
     const read = () => {
       try {
-        setConsented(localStorage.getItem(CONSENT_KEY) === "accepted");
+        setConsented(readConsent() === "accepted");
       } catch {
         setConsented(false);
       }

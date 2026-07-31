@@ -1,6 +1,8 @@
 import AuthForm from "@/components/dash/AuthForm";
 
-export const metadata = { title: "Log in - ChatFlowGate" };
+// noindex: a thin auth page adds nothing to search results and competes with
+// the pages that do. robots.txt does not cover it, so say it in metadata.
+export const metadata = { title: "Log in - ChatFlowGate", robots: { index: false, follow: true } };
 export const dynamic = "force-dynamic";
 
 export default function LoginPage() {

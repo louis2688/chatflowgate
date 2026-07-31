@@ -1,6 +1,6 @@
 import MarketingShell from "@/components/MarketingShell";
 
-export const metadata = { title: "Contact - ChatFlowGate" };
+export const metadata = { title: "Contact - ChatFlowGate", alternates: { canonical: "/contact" } };
 
 const row = "rounded-xl border border-white/10 bg-white/[0.03] p-5";
 const a = "text-[#4a90e2] hover:underline";

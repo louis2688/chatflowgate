@@ -1,6 +1,6 @@
 import MarketingShell from "@/components/MarketingShell";
 
-export const metadata = { title: "About - ChatFlowGate" };
+export const metadata = { title: "About - ChatFlowGate", alternates: { canonical: "/about" } };
 
 const h2 = "pt-3 text-lg font-bold uppercase tracking-wide text-white";
 

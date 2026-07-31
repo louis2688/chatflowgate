@@ -14,9 +14,9 @@ export type Plan = {
   canHideBranding: boolean;
 };
 
-// Branding removal starts at the first paid tier on purpose: the closest
-// competitor sells it for $10, so gating it higher loses that comparison
-// immediately.
+// Branding removal is available from the first paid tier rather than being held
+// back for a higher one: paying anything at all should be enough to remove
+// someone else's name from your own site.
 export const PLANS: Record<PlanId, Plan> = {
   free: { id: "free", label: "Free", price: 0, maxBots: 1, maxMembers: 1, monthlyMessages: 500, canHideBranding: false },
   lite: { id: "lite", label: "Lite", price: 19, maxBots: 3, maxMembers: 1, monthlyMessages: 5_000, canHideBranding: true },

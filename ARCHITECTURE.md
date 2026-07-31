@@ -173,10 +173,12 @@ Defense in depth, layer by layer:
 | No message content | Message text is never persisted; only session metadata (ip, geo, UA, lead details in lead mode) | `lib/store.ts` |
 | IP ban | Org-scoped IP blocklist, rejected at the gateway before any work | `lib/ipbans.ts` |
 
-Two independent adversarial reviews were run during development; the confirmed
-findings (a cross-tenant private-bot bypass, an SSRF hole, an invite
-privilege-escalation, an X-Forwarded-For rate-limit bypass, and a few correctness
-bugs) were all fixed.
+The codebase has been through independent adversarial security review, and every
+confirmed finding was fixed before release. Specific findings are not enumerated
+here: the repository is public, so a list of past weaknesses is a checklist for
+probing any deployment still running older code.
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ---
 

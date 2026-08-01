@@ -196,9 +196,28 @@ export default async function Home() {
             one script tag.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/signup" className={cta}>Start free workspace</Link>
             <Link href="#how" className={ctaOutline}>See how it works</Link>
+            {/* theme=dark, not the light badge Product Hunt hands you by default:
+                this hero is bg-black, and the light variant lands as a white slab.
+                Plain <img> rather than next/image because the badge is a remote SVG,
+                which the optimiser will not touch without dangerouslyAllowSVG. */}
+            <a
+              href="https://www.producthunt.com/products/chatflowgate?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-chatflowgate"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211907&theme=dark"
+                alt="ChatFlowGate - The secure frontend for n8n Chat | Product Hunt"
+                width={250}
+                height={54}
+                loading="lazy"
+              />
+            </a>
           </div>
 
           <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs font-medium text-neutral-400">

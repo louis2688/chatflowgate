@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { desc, sql } from "drizzle-orm";
 import { getServerSession } from "@/lib/server-auth";
@@ -140,23 +139,15 @@ export default async function AdminPage() {
   const th = "px-4 py-2 text-left text-xs font-medium";
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-10">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-semibold">Admin</h1>
-          <p className={`mt-1 text-sm ${muted}`}>
-            Founders only. Every workspace, live from the database.
-          </p>
-        </div>
-        <Link
-          href="/dashboard"
-          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-        >
-          Back to dashboard
-        </Link>
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-semibold">Admin</h1>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+          Founders only. Every workspace, live from the database.
+        </p>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {cards.map((c) => (
           <div key={c.label} className={card}>
             <p className={`text-xs ${muted}`}>{c.label}</p>
@@ -169,7 +160,7 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className={card}>
           <h2 className="text-sm font-medium">Daily activity, last {DAYS} days</h2>
           <div className="mt-3">
@@ -202,7 +193,7 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <section className="mt-6">
+      <section>
         <h2 className={`text-[11px] font-semibold uppercase tracking-wider ${muted}`}>Busiest bots</h2>
         <div className="mt-2 overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
           <table className="w-full text-sm">
@@ -235,7 +226,7 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section className="mt-6">
+      <section>
         <div className="flex items-baseline gap-2">
           <h2 className={`text-[11px] font-semibold uppercase tracking-wider ${muted}`}>All users</h2>
           <span className="text-sm font-semibold tabular-nums">{users.length.toLocaleString()}</span>
@@ -270,6 +261,6 @@ export default async function AdminPage() {
           </table>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

@@ -11,10 +11,12 @@ import ThemeToggle from "@/components/ThemeToggle";
 export default function DashShell({
   orgName,
   userEmail,
+  admin = false,
   children,
 }: {
   orgName: string;
   userEmail: string;
+  admin?: boolean;
   children: React.ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -32,13 +34,13 @@ export default function DashShell({
 
   return (
     <div className="flex h-dvh overflow-hidden bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <Sidebar orgName={orgName} userEmail={userEmail} />
+      <Sidebar orgName={orgName} userEmail={userEmail} admin={admin} />
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} aria-hidden />
           <div className="absolute inset-y-0 left-0 bg-white shadow-xl dark:bg-neutral-950">
-            <Sidebar orgName={orgName} userEmail={userEmail} variant="mobile" onNavigate={() => setMobileOpen(false)} />
+            <Sidebar orgName={orgName} userEmail={userEmail} admin={admin} variant="mobile" onNavigate={() => setMobileOpen(false)} />
           </div>
         </div>
       )}

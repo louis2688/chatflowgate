@@ -1,4 +1,5 @@
 import { requireContext } from "@/lib/server-auth";
+import { isAdmin } from "@/lib/admin";
 import DashShell from "@/components/dash/DashShell";
 import { ToastProvider } from "@/components/Toast";
 
@@ -6,7 +7,7 @@ export default async function DashLayout({ children }: { children: React.ReactNo
   const ctx = await requireContext();
   return (
     <ToastProvider>
-      <DashShell orgName={ctx.orgName} userEmail={ctx.user.email}>
+      <DashShell orgName={ctx.orgName} userEmail={ctx.user.email} admin={isAdmin(ctx.user.email)}>
         {children}
       </DashShell>
     </ToastProvider>

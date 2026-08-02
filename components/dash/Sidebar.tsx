@@ -24,14 +24,25 @@ const NAV = [
   { href: "/settings", label: "Settings", icon: icon("M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6") },
 ];
 
+// Appended for founders only, and kept last so the normal nav order never shifts.
+const ADMIN_ITEM = {
+  href: "/admin",
+  label: "Admin",
+  icon: icon("M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4zM9 12l2 2 4-4"),
+};
+
 export default function Sidebar({
   orgName,
   userEmail,
+  admin = false,
   variant = "desktop",
   onNavigate,
 }: {
   orgName: string;
   userEmail: string;
+  // Only ever true for an allow-listed founder. Hiding the link is cosmetic:
+  // /admin does its own check, so this cannot grant access on its own.
+  admin?: boolean;
   // "mobile" renders inside the drawer: always expanded, no collapse toggle.
   variant?: "desktop" | "mobile";
   onNavigate?: () => void;
@@ -90,7 +101,7 @@ export default function Sidebar({
       {!collapsed && <p className="mt-1 truncate px-2 text-xs text-neutral-500">{orgName}</p>}
 
       <nav className="mt-6 space-y-1">
-        {NAV.map((item) => {
+        {(admin ? [...NAV, ADMIN_ITEM] : NAV).map((item) => {
           const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
             <Link

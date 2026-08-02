@@ -248,7 +248,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="min-w-0 lg:pt-10">
+        <div className="order-first min-w-0 lg:order-none lg:pt-10">
           {bot ? (
             <Chat config={publicConfig(bot)} variant="panel" />
           ) : (

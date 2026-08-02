@@ -5,7 +5,7 @@ import { isAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { bot, chatSession, creditTxn, member, organization, user } from "@/lib/db/schema";
 import { PLANS, planOf } from "@/lib/plans";
-import { AreaChart, CHART_COLORS, Donut, GoalBar, Sparkline } from "./charts";
+import { AreaChart, CHART_COLORS, Donut, GoalBar, Sparkline } from "@/components/charts";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin - ChatFlowGate", robots: { index: false, follow: false } };

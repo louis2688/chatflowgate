@@ -1,7 +1,9 @@
 /**
- * Dependency-free SVG charts for the founders-only admin page. Server-rendered
- * and static: no tooltips, no hover, which is the right trade for a glance page
- * and keeps a charting library out of the bundle.
+ * Dependency-free SVG charts. Server-rendered and static: no tooltips, no hover,
+ * which is the right trade for a glance page and keeps a charting library out of
+ * the bundle. Nothing here touches the database or this app's schema, so the
+ * whole file copies into another project as-is; swap CHART_COLORS for that
+ * project's palette and the Tailwind neutral-* classes if it themes differently.
  * ponytail: reach for a real chart lib when this needs hover detail or zoom.
  */
 

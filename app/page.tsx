@@ -10,15 +10,30 @@ import { publicStats } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
+// Titled for what people actually type. "Multi-tenant chat frontend and webhook
+// gateway" describes the product accurately but is nobody's search: the query
+// this page has to win is "custom n8n chat ui". Keyword first, brand last,
+// because the brand has no search demand yet. The security angle stays in the
+// description, where it does the qualifying rather than the ranking.
 export const metadata: Metadata = {
-  title: "ChatFlowGate | Secure, multi-tenant chat frontend and webhook gateway for n8n",
+  title: "Custom n8n Chat UI - Secure, White-Label Chat Widget | ChatFlowGate",
   description:
-    "Put a security gateway in front of your n8n Chat workflows: the webhook stays server-side, every message is origin-checked, rate limited and metered, and the widget is white-label. Chat content is never stored.",
+    "Build a custom chat UI for n8n in minutes. Embed a white-label chat widget with one script tag, keep your n8n webhook hidden from the browser, and rate limit every visitor. No code required.",
+  keywords: [
+    "custom n8n chat ui",
+    "n8n chat widget",
+    "n8n chat ui",
+    "embed chat widget n8n",
+    "n8n chat trigger frontend",
+    "hide n8n webhook url",
+    "white label chat widget",
+    "multi tenant n8n chat",
+  ],
   alternates: { canonical: "https://www.chatflowgate.com/" },
   openGraph: {
-    title: "ChatFlowGate | Secure, multi-tenant chat frontend for n8n",
+    title: "Custom n8n Chat UI - Secure, White-Label Chat Widget",
     description:
-      "Hidden webhooks, per-IP and per-session rate limiting, signed bot-bound sessions, and white-label widgets for n8n Chat workflows.",
+      "Embed a custom chat widget for your n8n workflows with one script tag. The webhook never reaches the browser, and every visitor is rate limited and origin-checked.",
     url: "https://www.chatflowgate.com/",
     siteName: "ChatFlowGate",
     type: "website",
